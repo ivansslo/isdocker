@@ -112,12 +112,18 @@ while true; do
   print_item 16  "Redis"                          6379  "app"
   print_item 17  "ROS 2 Jazzy"                    ""    "app"
 
+  print_section "🖥️  VNC Desktop"
+  print_item 19  "Ubuntu Desktop (VNC)"          5901  "app"
+  print_item 20  "Debian Desktop (VNC)"          5902  "app"
+  print_item 21  "Alpine Desktop (VNC)"          5903  "app"
+  print_item 22  "Kali Desktop (VNC)"            5904  "app"
+
   print_section "🔧  System"
   print_item 18  "Install / Reinstall udocker"    ""    "sys"
   print_item  0  "Exit"                           ""    "sys"
 
   echo ""
-  echo -en "  ${BOLD}Select option [0-18]: ${RESET}"
+  echo -en "  ${BOLD}Select option [0-22]: ${RESET}"
   read -r choice
 
   case "$choice" in
@@ -198,6 +204,24 @@ while true; do
       ensure_udocker
       echo -e "\n  ${GREEN}[*] Starting ROS 2 Jazzy...${RESET}\n"
       run_script "$SCRIPT_DIR/apps/ros/ros.sh"
+      ;;
+
+    # ── VNC Desktop ───────────────────────────────────────────────
+    19)
+      ensure_udocker
+      launch_with_port "$SCRIPT_DIR/apps/vnc-desktop/ubuntu-vnc.sh" 5901
+      ;;
+    20)
+      ensure_udocker
+      launch_with_port "$SCRIPT_DIR/apps/vnc-desktop/debian-vnc.sh" 5902
+      ;;
+    21)
+      ensure_udocker
+      launch_with_port "$SCRIPT_DIR/apps/vnc-desktop/alpine-vnc.sh" 5903
+      ;;
+    22)
+      ensure_udocker
+      launch_with_port "$SCRIPT_DIR/apps/vnc-desktop/kali-vnc.sh" 5904
       ;;
 
     # ── System ─────────────────────────────────────────────────────
