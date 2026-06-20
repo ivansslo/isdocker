@@ -120,19 +120,18 @@ while true; do
   print_item  19  "Kali Desktop"                   5904  "vnc"
 
   print_section "🌐  Network & Remote"
-  print_item  20  "Tailscale CLI (Host)"           ""    "net"
-  print_item  21  "Tailscale in Container"         ""    "net"
+  print_item  20  "Tailscale CLI (Token/Login)"    ""    "net"
 
   print_section "🔧  System Utilities"
-  print_item  22  "Container Manager (ID/Status)"  ""    "sys"
-  print_item  23  "System Info (RAM/CPU)"          ""    "sys"
-  print_item  24  "Uninstall / Clean"              ""    "sys"
-  print_item  25  "Update isdocker"                ""    "sys"
-  print_item  26  "Reinstall udocker"              ""    "sys"
+  print_item  21  "Container Manager (ID/Status)"  ""    "sys"
+  print_item  22  "System Info (RAM/CPU)"          ""    "sys"
+  print_item  23  "Uninstall / Clean"              ""    "sys"
+  print_item  24  "Update isdocker"                ""    "sys"
+  print_item  25  "Reinstall udocker"              ""    "sys"
   print_item  00  "Exit"                           ""    "sys"
 
   echo ""
-  echo -en "  ${BOLD}Select option [00-26]: ${RESET}"
+  echo -en "  ${BOLD}Select option [00-25]: ${RESET}"
   read -r choice
 
   case "$choice" in
@@ -165,12 +164,11 @@ while true; do
     19) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/vnc-desktop/kali-vnc.sh" 5904 ;;
 
     20) run_script "$SCRIPT_DIR/lib/tailscale.sh" ;;
-    21) ensure_udocker; run_script "$SCRIPT_DIR/lib/tailscale_container.sh" ;;
-    22) ensure_udocker; run_script "$SCRIPT_DIR/lib/manager.sh" ;;
-    23) run_script "$SCRIPT_DIR/lib/sysinfo.sh" ;;
-    24) run_script "$SCRIPT_DIR/lib/uninstall.sh" ;;
-    25) run_script "$SCRIPT_DIR/lib/update.sh" ;;
-    26) run_script "$SCRIPT_DIR/install_udocker.sh" ;;
+    21) ensure_udocker; run_script "$SCRIPT_DIR/lib/manager.sh" ;;
+    22) run_script "$SCRIPT_DIR/lib/sysinfo.sh" ;;
+    23) run_script "$SCRIPT_DIR/lib/uninstall.sh" ;;
+    24) run_script "$SCRIPT_DIR/lib/update.sh" ;;
+    25) run_script "$SCRIPT_DIR/install_udocker.sh" ;;
 
     0|00|q|Q|exit) echo -e "\n  Goodbye.\n" ; exit 0 ;;
     *) echo -e "\n  Invalid option." ; sleep 1 ;;

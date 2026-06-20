@@ -7,109 +7,91 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/source.env"
 
-STATE_DIR="$HOME/.tailscale_state"
-mkdir -p "$STATE_DIR"
+INSTALL_DIR="$HOME/.tailscale"
 
-check_package() {
-    if ! command -v tailscale &>/dev/null; then
-        echo -e "${YELLOW}[*] Tailscale not found. Installing via pkg...${RESET}"
-        pkg update -y && pkg install tailscale -y
-        echo -e "${GREEN}[✓] Tailscale installed successfully.${RESET}"
-    fi
+install_tailscale_cli() {
+    echo -e "${YELLOW}[*] Installing Tailscale CLI...${RESET}"
+    pkg update -y
+    pkg install tailscale -y
+    echo -e "${GREEN}[✓] Tailscale CLI installed.${RESET}"
 }
 
 start_daemon() {
     if ! pgrep tailscaled >/dev/null; then
-        echo -e "${YELLOW}[*] Starting tailscaled in userspace mode...${RESET}"
-        # Termux requires --tun=userspace-networking because we don't have /dev/net/tun access
-        tailscaled --tun=userspace-networking --statedir="$STATE_DIR" &>/dev/null &
-        sleep 5
-        if pgrep tailscaled >/dev/null; then
-            echo -e "${GREEN}[✓] Daemon started.${RESET}"
-        else
-            echo -e "${RED}[!] Failed to start daemon. Check Termux permissions.${RESET}"
-            return 1
-        fi
+        echo -e "${YELLOW}[*] Starting tailscaled daemon (userspace-networking)...${RESET}"
+        # Create state directory
+        mkdir -p "$HOME/.tailscale_state"
+        # Start daemon in background
+        tailscaled --tun=userspace-networking --statedir="$HOME/.tailscale_state" &>/dev/null &
+        sleep 3
     fi
-    return 0
 }
 
-tailscale_menu() {
+setup_tailscale() {
     clear
     echo -e "${BLUE}${BOLD}  ╔══════════════════════════════════════════════════════╗"
-    echo "  ║          isdocker · Tailscale for Termux             ║"
+    echo "  ║             isdocker · Tailscale Manager             ║"
     echo -e "  ╚══════════════════════════════════════════════════════╝${RESET}"
     echo ""
 
-    # Check status
-    local ts_ip=$(tailscale ip -4 2>/dev/null)
-    if [ -n "$ts_ip" ]; then
-        echo -e "  Status: ${GREEN}Connected${RESET} | IP: ${BOLD}$ts_ip${RESET}"
-    else
-        echo -e "  Status: ${RED}Disconnected / Offline${RESET}"
+    if ! command -v tailscale &>/dev/null; then
+        install_tailscale_cli
     fi
-    echo ""
 
-    echo -e "  ${CYAN}[1] Login with Auth Key (Token)"
-    echo -e "  [2] Login via Web (Standard)"
-    echo -e "  [3] Show Network Status"
-    echo -e "  [4] Disconnect / Logout"
-    echo -e "  [5] Restart Tailscale Daemon"
-    echo -e "  [6] Uninstall Tailscale"
-    echo -e "  [0] Back to Main Menu${RESET}"
+    start_daemon
+
+    echo -e "  ${CYAN}[1] Login with Auth Token (Key)"
+    echo -e "  [2] Login via Web Browser"
+    echo -e "  [3] Connection Status"
+    echo -e "  [4] Get My Tailscale IP"
+    echo -e "  [5] Logout / Disconnect"
+    echo -e "  [6] Stop Daemon"
+    echo -e "  [0] Back to Menu${RESET}"
     echo ""
     echo -en "  Select: "
-    read -r choice
+    read -r ts_choice
 
-    case "$choice" in
+    case "$ts_choice" in
         1)
-            echo -en "\n  Enter Tailscale Auth Key: "
-            read -r ts_key
-            if [ -n "$ts_key" ]; then
-                echo -e "  ${YELLOW}[*] Authenticating...${RESET}"
-                tailscale up --authkey="$ts_key" --hostname="isdocker-termux" --accept-dns=false
+            echo -en "\n  Enter Tailscale Auth Key (tskey-auth-...): "
+            read -r ts_token
+            if [ -n "$ts_token" ]; then
+                echo -e "  ${YELLOW}[*] Connecting with token...${RESET}"
+                tailscale up --authkey="$ts_token" --hostname="isdocker-termux"
             else
-                echo -e "  ${RED}[!] Auth key is required.${RESET}"
+                echo -e "  ${RED}[!] Token cannot be empty.${RESET}"
             fi
             ;;
         2)
-            echo -e "  ${YELLOW}[*] Follow the link to login:${RESET}"
-            tailscale up --hostname="isdocker-termux" --accept-dns=false
+            echo -e "  ${YELLOW}[*] Please visit the link below to authenticate:${RESET}"
+            tailscale up --hostname="isdocker-termux"
             ;;
         3)
-            echo -e "\n${GREEN}── Network List ──${RESET}"
+            echo -e "\n  ${GREEN}── Tailscale Status ──${RESET}"
             tailscale status
             ;;
         4)
-            tailscale logout
-            echo -e "\n${YELLOW}[*] Logged out.${RESET}"
+            ts_ip=$(tailscale ip -4)
+            if [ -n "$ts_ip" ]; then
+                echo -e "\n  ${GREEN}[✓] Your IP: ${BOLD}$ts_ip${RESET}"
+            else
+                echo -e "\n  ${RED}[!] Not connected to Tailscale network.${RESET}"
+            fi
             ;;
         5)
-            echo -e "${YELLOW}[*] Restarting daemon...${RESET}"
-            pkill tailscaled
-            sleep 2
-            start_daemon
+            tailscale logout
+            echo -e "\n  ${YELLOW}[*] Logged out.${RESET}"
             ;;
         6)
-            echo -en "${RED}  Are you sure you want to uninstall Tailscale? [y/N]: ${RESET}"
-            read -r confirm
-            if [[ "${confirm,,}" == "y" ]]; then
-                pkill tailscaled
-                pkg uninstall tailscale -y
-                rm -rf "$STATE_DIR"
-                echo -e "${GREEN}[✓] Tailscale removed.${RESET}"
-                sleep 2
-                return
-            fi
+            pkill tailscaled
+            echo -e "\n  ${RED}[*] Daemon stopped.${RESET}"
             ;;
         0) return ;;
         *) echo "Invalid option." ;;
     esac
-    echo -e "\n${DIM}Press Enter to continue...${RESET}"
+    echo -e "\n  ${DIM}Press Enter to continue...${RESET}"
     read -r
-    tailscale_menu
+    setup_tailscale
 }
 
-# Main Execution
-check_package
-start_daemon && tailscale_menu
+setup_tailscale
