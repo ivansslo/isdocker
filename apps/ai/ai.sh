@@ -215,6 +215,8 @@ ai_status() {
   if [ -f "$HOME/.hermes/.keys" ]; then
     while IFS='=' read -r key val; do
       [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
+      # Skip invalid variable names (e.g. ₣IREBASE_API_KEY with Unicode chars)
+      [[ ! "$key" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && continue
       val="${val%\"}" ; val="${val#\"}" ; val="${val%\'}" ; val="${val#\'}"
       [ -z "${!key:-}" ] && export "$key=$val"
     done < "$HOME/.hermes/.keys"
