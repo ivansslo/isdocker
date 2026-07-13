@@ -29,7 +29,6 @@ Setelah install, semua command langsung tersedia:
 | Command | Fungsi |
 |---|---|
 | `roc-agent` | AI Agent CLI utama — chat, ask, code, agent |
-| `roc-hermes` | Hermes Agent (container, root, venv) |
 | `roc-crewai` | CrewAI multi-agent (Groq/Gemini) |
 | `roc-adk` | ADK Invoice Processing (Google) |
 | `roc-antigravity` | Google AI IDE (port 5905) |
@@ -46,7 +45,7 @@ Setelah install, semua command langsung tersedia:
 | Command | Fungsi |
 |---|---|
 | `roc-tailscale` | Tailscale VPN (container node) |
-| `roc-jupyter` | JupyterLab (port 8888) |
+| `roc-hms` | Hermes Agent (container, root) |
 | `roc-httpd` | HTTP Server (port 3000) |
 | `roc-spwr` | Superpowers (coding agent skills) |
 | `roc-ros` | ROS Robot OS |

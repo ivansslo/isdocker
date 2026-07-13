@@ -126,9 +126,8 @@ make_cmd "roc-kali"        "os/kali/kali.sh"            "Kali Minimal (port 2222
 make_cmd "roc-nethunter"   "os/nethunter/nethunter.sh"  "Kali NetHunter (port 2222)"
 
 # ── AI & Dev Apps ──
-make_cmd "roc-hermes"      "apps/hermes-agent/hermes-agent.sh"    "Hermes Agent (container root)"
 make_cmd "roc-crewai"      "apps/crewai/crewai.sh"                "CrewAI multi-agent"
-make_cmd "roc-jupyter"     "apps/jupyter/jupyter.sh"              "JupyterLab (port 8888)"
+make_cmd "roc-hms"       "apps/hms/hms.sh"              "Hermes Agent (container, root)"
 make_cmd "roc-antigravity" "apps/antigravity/antigravity.sh"      "Antigravity AI IDE (port 5905)"
 make_cmd "roc-adk"         "apps/adk-invoice/adk-invoice.sh"      "ADK Invoice (port 8000)"
 
@@ -160,7 +159,7 @@ echo -e " ${BOLD}Quick Start:${RESET}"
 echo -e "  ${CYAN}roc-agent setup${RESET}         Setup API keys"
 echo -e "  ${CYAN}roc-agent chat${RESET}          Chat dengan AI"
 echo -e "  ${CYAN}roc-agent ask 'halo'${RESET}     Quick question"
-echo -e "  ${CYAN}roc-hermes setup${RESET}        Setup Hermes Agent (container)"
+echo -e "  ${CYAN}roc-hms setup         Setup Hermes Agent (container)"
 echo -e "  ${CYAN}roc-tailscale${RESET}           Setup Tailscale VPN"
 echo -e "  ${CYAN}roc-menu${RESET}                Menu utama"
 echo -e "  ${CYAN}roc-status${RESET}              Cek container status"
