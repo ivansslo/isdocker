@@ -1,0 +1,41 @@
+# ══════════════════════════════════════════════════
+# .gitignore — roc-containers
+# ══════════════════════════════════════════════════
+
+# ─── Secrets & Keys ──────────────────────────────
+.keys
+*.keys
+config.env
+.env
+.env.*
+!.env.example
+hermes_keys
+
+# ─── Data ────────────────────────────────────────
+data-*/
+.hermes/
+chat_history.json
+chat_*.json
+
+# ─── Python ──────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+python3_venv/
+venv/
+
+# ─── Node ────────────────────────────────────────
+node_modules/
+
+# ─── OS / Editor ─────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# ─── Logs ────────────────────────────────────────
+*.log

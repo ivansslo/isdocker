@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>roc-containers · Termux Container Manager</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Courier New', monospace;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .terminal {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .titlebar {
+    background: #21262d;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #30363d;
+  }
+  .dot { width: 13px; height: 13px; border-radius: 50%; }
+  .dot.red { background: #ff5f57; }
+  .dot.yellow { background: #febc2e; }
+  .dot.green { background: #28c840; }
+  .titlebar-text {
+    margin-left: 10px;
+    font-size: 13px;
+    color: #8b949e;
+    flex: 1;
+    text-align: center;
+  }
+  .screen { padding: 24px; }
+  .cyan  { color: #56b6c2; }
+  .green { color: #3fb950; }
+  .yellow{ color: #e3b341; }
+  .red   { color: #f85149; }
+  .blue  { color: #79c0ff; }
+  .dim   { color: #6e7681; }
+  .bold  { font-weight: bold; }
+  .white { color: #f0f6fc; }
+
+  .header-box {
+    border: 1px solid #56b6c2;
+    padding: 10px 20px;
+    margin-bottom: 24px;
+    border-radius: 6px;
+    text-align: center;
+    color: #56b6c2;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .section-title {
+    color: #e3b341;
+    font-weight: bold;
+    margin: 20px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #21262d;
+    font-size: 13px;
+  }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 13px;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .menu-item:hover { background: #21262d; }
+  .menu-item .num {
+    display: inline-block;
+    width: 26px;
+    text-align: right;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+  .menu-item .label { flex: 1; color: #c9d1d9; }
+  .menu-item .port { color: #6e7681; font-size: 11px; }
+  .menu-item.sec .num { color: #f85149; }
+  .menu-item.os  .num { color: #3fb950; }
+  .menu-item.app .num { color: #56b6c2; }
+  .menu-item.sys .num { color: #e3b341; }
+
+  .prompt {
+    margin-top: 24px;
+    padding: 10px 14px;
+    background: #0d1117;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    font-size: 13px;
+  }
+  .prompt .cursor {
+    display: inline-block;
+    width: 9px;
+    height: 15px;
+    background: #56b6c2;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .file-tree {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 24px;
+    font-size: 12px;
+    line-height: 1.9;
+  }
+  .file-tree .folder { color: #56b6c2; font-weight: bold; }
+  .file-tree .file   { color: #c9d1d9; }
+  .file-tree .note   { color: #6e7681; }
+  .file-tree .new    { color: #3fb950; }
+
+  .badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge.new-badge { background: #1f6feb; color: #fff; }
+  .badge.sec-badge { background: #b91c1c; color: #fff; }
+</style>
+</head>
+<body>
+<div class="terminal">
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <span class="titlebar-text">bash ~/.roc-containers/menu.sh</span>
+  </div>
+  <div class="screen">
+
+    <div class="header-box">
+      <div class="bold" style="font-size:15px;">roc-containers · Termux Container Manager</div>
+      <div class="dim">github.com/ivansslo/roc-containers</div>
+    </div>
+
+    <!-- Security OS -->
+    <div class="section-title">🛡️  Security / Penetration Testing OS</div>
+    <div class="menu-grid">
+      <div class="menu-item sec">
+        <span class="num">[1]</span>
+        <span class="label">Kali NetHunter (full tools) <span class="badge sec-badge">NEW</span></span>
+        <span class="port">→ port 2222</span>
+      </div>
+      <div class="menu-item sec">
+        <span class="num">[2]</span>
+        <span class="label">Kali Linux (minimal shell)</span>
+        <span class="port">→ port 2222</span>
+      </div>
+    </div>
+
+    <!-- Linux OS -->
+    <div class="section-title">🐧  Linux OS</div>
+    <div class="menu-grid">
+      <div class="menu-item os">
+        <span class="num">[3]</span>
+        <span class="label">Ubuntu 22.04 LTS <span class="badge new-badge">NEW</span></span>
+        <span class="port">→ port 2223</span>
+      </div>
+      <div class="menu-item os">
+        <span class="num">[4]</span>
+        <span class="label">Debian 12 Bookworm (slim) <span class="badge new-badge">NEW</span></span>
+        <span class="port">→ port 2224</span>
+      </div>
+      <div class="menu-item os">
+        <span class="num">[5]</span>
+        <span class="label">Alpine Linux (latest) <span class="badge new-badge">NEW</span></span>
+        <span class="port">→ port 2225</span>
+      </div>
+    </div>
+
+    <!-- Self-Hosted Apps -->
+    <div class="section-title">☁️  Self-Hosted Apps</div>
+    <div class="menu-grid">
+      <div class="menu-item app"><span class="num">[6]</span><span class="label">AdGuard Home</span><span class="port">→ 8123</span></div>
+      <div class="menu-item app"><span class="num">[7]</span><span class="label">Home Assistant</span><span class="port">→ 8123</span></div>
+      <div class="menu-item app"><span class="num">[8]</span><span class="label">Nextcloud</span><span class="port">→ 2080</span></div>
+      <div class="menu-item app"><span class="num">[9]</span><span class="label">ownCloud</span><span class="port">→ 2081</span></div>
+      <div class="menu-item app"><span class="num">[10]</span><span class="label">Puter (cloud OS)</span><span class="port">→ 4100</span></div>
+    </div>
+
+    <!-- Media & Tools -->
+    <div class="section-title">🎬  Media &amp; Tools</div>
+    <div class="menu-grid">
+      <div class="menu-item app"><span class="num">[11]</span><span class="label">Jellyfin Media Server</span><span class="port">→ 8096</span></div>
+      <div class="menu-item app"><span class="num">[12]</span><span class="label">Calibre-Web (eBooks)</span><span class="port">→ 8083</span></div>
+      <div class="menu-item app"><span class="num">[13]</span><span class="label">Stirling PDF</span><span class="port">→ 8080</span></div>
+      <div class="menu-item app"><span class="num">[14]</span><span class="label">Apache HTTPD</span><span class="port">→ 2082</span></div>
+      <div class="menu-item app"><span class="num">[15]</span><span class="label">JupyterLab / Notebook</span><span class="port">→ 8888</span></div>
+    </div>
+
+    <!-- Dev / Infra -->
+    <div class="section-title">⚙️  Dev / Infra</div>
+    <div class="menu-grid">
+      <div class="menu-item app"><span class="num">[16]</span><span class="label">Redis</span><span class="port">→ 6379</span></div>
+      <div class="menu-item app"><span class="num">[17]</span><span class="label">ROS 2 Jazzy</span><span class="port"></span></div>
+    </div>
+
+    <!-- System -->
+    <div class="section-title">🔧  System</div>
+    <div class="menu-grid">
+      <div class="menu-item sys"><span class="num">[18]</span><span class="label">Install / Reinstall udocker</span></div>
+      <div class="menu-item sys"><span class="num">[0]</span><span class="label">Exit</span></div>
+    </div>
+
+    <div class="prompt">
+      <span class="green">$</span>
+      <span class="white"> Select option [0-18]: </span>
+      <span class="cursor"></span>
+    </div>
+
+    <!-- File Tree -->
+    <div class="file-tree">
+      <div><span class="folder">roc-containers/</span></div>
+      <div>&nbsp;&nbsp;├── <span class="file">menu.sh</span>  <span class="note">← script menu interaktif</span></div>
+      <div>&nbsp;&nbsp;├── <span class="file">install_udocker.sh</span></div>
+      <div>&nbsp;&nbsp;├── <span class="folder">lib/</span>  <span class="note">← shared helpers</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── source.env</div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── libnetstub.sh</div>
+      <div>&nbsp;&nbsp;├── <span class="folder">os/</span>  <span class="note">← OS containers</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="new">nethunter/nethunter.sh</span>  <span class="note">← NEW</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="new">kali/kali.sh</span>  <span class="note">← NEW</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="new">ubuntu/ubuntu.sh</span>  <span class="note">← NEW</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="new">debian/debian.sh</span>  <span class="note">← NEW</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="new">alpine/alpine.sh</span>  <span class="note">← NEW</span></div>
+      <div>&nbsp;&nbsp;└── <span class="folder">apps/</span>  <span class="note">← app containers</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── adguard/ &nbsp; home-assistant/ &nbsp; nextcloud/</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── owncloud/ &nbsp; puter/ &nbsp; jellyfin/ &nbsp; calibre-web/</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── s-pdf/ &nbsp; httpd/ &nbsp; jupyter/ &nbsp; redis/ &nbsp; ros/</div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
