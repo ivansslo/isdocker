@@ -135,7 +135,7 @@ make_cmd "roc-adk"         "apps/adk-invoice/adk-invoice.sh"      "ADK Invoice (
 make_cmd "roc-tailscale"   "apps/tailscale/tailscale.sh"  "Tailscale VPN node"
 make_cmd "roc-httpd"       "apps/httpd/httpd.sh"          "HTTP Server (port 3000)"
 make_cmd "roc-spwr"  "apps/spwr/spwr.sh"  "Superpowers (coding agent skills)"
-make_cmd "roc-ros"         "apps/ros/ros.sh"              "ROS Robot OS"
+make_cmd "roc-clawdex"    "apps/clawdex/clawdex.sh"    "Clawdex Mobile (ivansslo/clawdex-mobile)"
 make_cmd "roc-maagba"     "apps/maagba/maagba.sh"     "Multi-Agent Architectural Guidance (Bedrock AgentCore)"
 
 # ── Google Cloud ──

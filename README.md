@@ -48,7 +48,7 @@ Setelah install, semua command langsung tersedia:
 | `roc-hms` | Hermes Agent (container, root) |
 | `roc-httpd` | HTTP Server (port 3000) |
 | `roc-spwr` | Superpowers (coding agent skills) |
-| `roc-ros` | ROS Robot OS |
+| `roc-clawdex` | Clawdex Mobile (ivansslo/clawdex-mobile) |
 | `roc-maagba` | Multi-Agent Architectural Guidance (Bedrock AgentCore) |
 
 ### ⚙️ System
