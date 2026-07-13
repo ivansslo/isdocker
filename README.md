@@ -145,6 +145,23 @@ roc-menu
 | `roc-ai error <msg>` | 🐛 Error Handler — analisis & fix error |
 | `roc-ai native` | Run lsmod native CLI (lasokamodule) |
 
+### ⭐ Pewaris lsmod (roc-ai Special)
+
+roc-ai adalah **pewaris lsmod** — fitur istimewa yang menyebar ke semua AI & Agent containers:
+
+| Sub-command | Fungsi |
+|---|---|
+| `roc-ai orchestrate <task>` | 🎼 Orchestrate semua AI agents untuk task kompleks |
+| `roc-ai route <task> [ctx]` | 🧭 Route task ke agent yang tepat (auto/crew/hms/adk/code/error) |
+| `roc-ai broadcast <msg>` | 📢 Broadcast pesan ke semua AI agents |
+| `roc-ai mesh` | 🕸️ Cek status koneksi semua AI Agent containers |
+
+**lsmod Propagation:**
+- `lib/lsmod_loader.sh` — shared loader, di-source oleh SEMUA roc-* script
+- Setiap AI container mendapat `.lsmod/` dengan init script
+- `roc-ai install` → propagate lsmod ke semua container data dirs
+- Semua keys dari env, **tidak ada hardcoded secrets**
+
 ### Stack Management
 
 | Sub-command | Fungsi |
@@ -161,6 +178,8 @@ roc-menu
 ### Fitur
 
 - **lsmod Module System**: `ivansslo/lsmod` — Agent, Chat, Coding, Error modes
+- **⭐ Pewaris lsmod**: roc-ai mewarisi semua lsmod + orchestration, routing, broadcast, mesh
+- **lsmod Propagation**: Menyebar ke semua AI & Agent containers via `lib/lsmod_loader.sh`
 - **Auto-update**: Cek update otomatis setiap 1 jam saat `roc-ai run`
 - **Service status**: `roc-ai status` — repo, modules, Python, Node, Docker, containers, API keys
 - **Always current**: `roc-ai update` pull + re-install deps

@@ -93,73 +93,75 @@ while true; do
   # ── ⭐ AI Stack ──
   print_section "⭐  AI Stack (Primary)"
   print_item  01  "RoadFX AI Stack"               "roc-ai"   "ai"
+  print_item  02  "AI Agent Mesh"                 "roc-ai mesh" "ai"
 
   # ── 🤖 AI & Agent ──
   print_section "🤖  AI & Agent"
-  print_item  02  "AI Agent CLI"                  "roc-agent" "ai"
-  print_item  03  "CrewAI Multi-Agent"            "roc-crewai" "ai"
-  print_item  04  "Hermes Agent (container)"      "roc-hms"   "ai"
-  print_item  05  "Antigravity AI IDE"            "port 5905" "ai"
-  print_item  06  "ADK Invoice Processing"        "port 8000" "ai"
-  print_item  07  "MAAGBA (Bedrock AgentCore)"    "roc-maagba" "ai"
+  print_item  03  "AI Agent CLI"                  "roc-agent" "ai"
+  print_item  04  "CrewAI Multi-Agent"            "roc-crewai" "ai"
+  print_item  05  "Hermes Agent (container)"      "roc-hms"   "ai"
+  print_item  06  "Antigravity AI IDE"            "port 5905" "ai"
+  print_item  07  "ADK Invoice Processing"        "port 8000" "ai"
+  print_item  08  "MAAGBA (Bedrock AgentCore)"    "roc-maagba" "ai"
 
   # ── 🐧 OS Containers ──
   print_section "🐧  Operating Systems"
-  print_item  08  "Ubuntu 22.04 LTS"              "port 2223" "os"
-  print_item  09  "Debian 12 Bookworm"            "port 2224" "os"
+  print_item  09  "Ubuntu 22.04 LTS"              "port 2223" "os"
+  print_item  10  "Debian 12 Bookworm"            "port 2224" "os"
 
   # ── 🌐 Network & Services ──
   print_section "🌐  Network & Services"
-  print_item  10  "Tailscale VPN"                 "roc-tailscale" "app"
-  print_item  11  "HTTP Server"                   "port 3000"  "app"
-  print_item  12  "Superpowers (agent skills)"    "roc-spwr"   "app"
-  print_item  13  "Hermes UI"                     "roc-hermui" "app"
-  print_item  14  "Clawdex Mobile"                "roc-clawdex" "app"
+  print_item  11  "Tailscale VPN"                 "roc-tailscale" "app"
+  print_item  12  "HTTP Server"                   "port 3000"  "app"
+  print_item  13  "Superpowers (agent skills)"    "roc-spwr"   "app"
+  print_item  14  "Hermes UI"                     "roc-hermui" "app"
+  print_item  15  "Clawdex Mobile"                "roc-clawdex" "app"
 
   # ── ⚙️ System ──
   print_section "⚙️  System"
-  print_item  15  "Container Manager (Status)"    ""  "sys"
-  print_item  16  "Google Cloud (GCP)"            ""  "sys"
-  print_item  17  "System Info (RAM/CPU)"         ""  "sys"
-  print_item  18  "Update roc-containers"         ""  "sys"
-  print_item  19  "Uninstall / Clean"             ""  "sys"
-  print_item  20  "Reinstall udocker"             ""  "sys"
+  print_item  16  "Container Manager (Status)"    ""  "sys"
+  print_item  17  "Google Cloud (GCP)"            ""  "sys"
+  print_item  18  "System Info (RAM/CPU)"         ""  "sys"
+  print_item  19  "Update roc-containers"         ""  "sys"
+  print_item  20  "Uninstall / Clean"             ""  "sys"
+  print_item  21  "Reinstall udocker"             ""  "sys"
   print_item  00  "Exit"                          ""  "sys"
 
   echo ""
-  echo -en "  ${BOLD}Select option [00-20]: ${RESET}"
+  echo -en "  ${BOLD}Select option [00-21]: ${RESET}"
   read -r choice
 
   case "$choice" in
     # ── ⭐ AI Stack ──
     1|01) run_script "$SCRIPT_DIR/apps/ai/ai.sh" ;;
+    2|02) run_script "$SCRIPT_DIR/apps/ai/ai.sh" mesh ;;
 
     # ── 🤖 AI & Agent ──
-    2|02) bash "$PREFIX/bin/roc-agent" "${@:-}" ;;
-    3|03) ensure_udocker; run_script "$SCRIPT_DIR/apps/crewai/crewai.sh" ;;
-    4|04) ensure_udocker; run_script "$SCRIPT_DIR/apps/hms/hms.sh" ;;
-    5|05) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/antigravity/antigravity.sh" 5905 ;;
-    6|06) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/adk-invoice/adk-invoice.sh" 8000 ;;
-    7|07) run_script "$SCRIPT_DIR/apps/maagba/maagba.sh" ;;
+    3|03) bash "$PREFIX/bin/roc-agent" "${@:-}" ;;
+    4|04) ensure_udocker; run_script "$SCRIPT_DIR/apps/crewai/crewai.sh" ;;
+    5|05) ensure_udocker; run_script "$SCRIPT_DIR/apps/hms/hms.sh" ;;
+    6|06) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/antigravity/antigravity.sh" 5905 ;;
+    7|07) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/adk-invoice/adk-invoice.sh" 8000 ;;
+    8|08) run_script "$SCRIPT_DIR/apps/maagba/maagba.sh" ;;
 
     # ── 🐧 OS Containers ──
-    8|08) ensure_udocker; launch_with_port "$SCRIPT_DIR/os/ubuntu/ubuntu.sh" 2223 ;;
-    9|09) ensure_udocker; launch_with_port "$SCRIPT_DIR/os/debian/debian.sh" 2224 ;;
+    9|09) ensure_udocker; launch_with_port "$SCRIPT_DIR/os/ubuntu/ubuntu.sh" 2223 ;;
+    10)   ensure_udocker; launch_with_port "$SCRIPT_DIR/os/debian/debian.sh" 2224 ;;
 
     # ── 🌐 Network & Services ──
-    10) ensure_udocker; run_script "$SCRIPT_DIR/apps/tailscale/tailscale.sh" ;;
-    11) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/httpd/httpd.sh" 3000 ;;
-    12) run_script "$SCRIPT_DIR/apps/spwr/spwr.sh" ;;
-    13) run_script "$SCRIPT_DIR/apps/hermui/hermui.sh" ;;
-    14) run_script "$SCRIPT_DIR/apps/clawdex/clawdex.sh" ;;
+    11) ensure_udocker; run_script "$SCRIPT_DIR/apps/tailscale/tailscale.sh" ;;
+    12) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/httpd/httpd.sh" 3000 ;;
+    13) run_script "$SCRIPT_DIR/apps/spwr/spwr.sh" ;;
+    14) run_script "$SCRIPT_DIR/apps/hermui/hermui.sh" ;;
+    15) run_script "$SCRIPT_DIR/apps/clawdex/clawdex.sh" ;;
 
     # ── ⚙️ System ──
-    15) ensure_udocker; run_script "$SCRIPT_DIR/lib/manager.sh" ;;
-    16) run_script "$SCRIPT_DIR/lib/google_project.sh" ;;
-    17) run_script "$SCRIPT_DIR/lib/sysinfo.sh" ;;
-    18) run_script "$SCRIPT_DIR/lib/update.sh" ;;
-    19) run_script "$SCRIPT_DIR/lib/uninstall.sh" ;;
-    20) run_script "$SCRIPT_DIR/install_udocker.sh" ;;
+    16) ensure_udocker; run_script "$SCRIPT_DIR/lib/manager.sh" ;;
+    17) run_script "$SCRIPT_DIR/lib/google_project.sh" ;;
+    18) run_script "$SCRIPT_DIR/lib/sysinfo.sh" ;;
+    19) run_script "$SCRIPT_DIR/lib/update.sh" ;;
+    20) run_script "$SCRIPT_DIR/lib/uninstall.sh" ;;
+    21) run_script "$SCRIPT_DIR/install_udocker.sh" ;;
 
     0|00|q|Q|exit) echo -e "\n  Goodbye.\n" ; exit 0 ;;
     *) echo -e "\n  Invalid option." ; sleep 1 ;;

@@ -4,218 +4,30 @@
 #  License: MIT
 #  Repo: https://github.com/ivansslo/roc-containers
 # ─────────────────────────────────────────────────────────────────
-#  roc-containers · lsmod — Module System for roc-ai
-#  Clone: ivansslo/lsmod
-#  Provides: Agent Mode, Chat, Coding, Error Functions
+#  lsmod — Module System for roc-ai ⭐ PEWARIS
+#  ivansslo/lsmod
+#
+#  lsmod menyebar ke semua AI & Agent containers via:
+#    - lib/lsmod_loader.sh (shared loader, di-source oleh semua roc-*)
+#    - lsmod_propagate() (inject ke container data dirs)
+#    - lsmod_route() (routing ke agent yang tepat)
+#    - lsmod_broadcast() (pesan ke semua agents)
+#
+#  roc-ai adalah PEWARIS lsmod — fitur istimewa:
+#    - Orchestration semua AI agents
+#    - Container-aware routing
+#    - Cross-agent communication
+#    - Service mesh untuk AI & Agent containers
 # ─────────────────────────────────────────────────────────────────
 
-source "$(dirname "${BASH_SOURCE[0]}")/../../lib/source.env" 2>/dev/null || true
-
-# Colors
-: "${RED:=$'\033[0;31m'}"; : "${GREEN:=$'\033[0;32m'}"; : "${YELLOW:=$'\033[1;33m'}"
-: "${CYAN:=$'\033[0;36m'}"; : "${BLUE:=$'\033[0;34m'}"; : "${MAGENTA:=$'\033[0;35m'}"
-: "${BOLD:=$'\033[1m'}"; : "${DIM:=$'\033[2m'}"; : "${RESET:=$'\033[0m'}"
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/lsmod_loader.sh" 2>/dev/null || true
 
 LSMOD_DIR="$HOME/.roc-containers/apps/ai/modules/lsmod"
 LSMOD_REPO="https://github.com/ivansslo/lsmod"
 LSMOD_DATA_DIR="$HOME/.roc-containers/data-lsmod"
 
 # ──────────────────────────────────────────────────────────────
-#  Core Functions
-# ──────────────────────────────────────────────────────────────
-
-lsmod_ensure() {
-  if [ ! -d "$LSMOD_DIR/.git" ]; then
-    echo -e "${YELLOW}[*] Cloning lsmod (Module System)...${RESET}"
-    GIT_TERMINAL_PROMPT=0 git clone --depth 1 "$LSMOD_REPO" "$LSMOD_DIR" 2>/dev/null
-    if [ $? -ne 0 ]; then
-      echo -e "${RED}[✗] Gagal clone repo. Cek koneksi internet.${RESET}"
-      return 1
-    fi
-    echo -e "${GREEN}[✓] lsmod berhasil di-clone${RESET}"
-  else
-    echo -e "${DIM}[*] Updating lsmod...${RESET}"
-    git -C "$LSMOD_DIR" pull --ff-only 2>/dev/null || true
-  fi
-  mkdir -p "$LSMOD_DATA_DIR"
-}
-
-# Load API keys from env (NO hardcoded keys)
-lsmod_load_keys() {
-  # Load from hermes_keys
-  [ -f "$HOME/.hermes_keys" ] && source "$HOME/.hermes_keys" 2>/dev/null
-  if [ -f "$HOME/.hermes/.keys" ]; then
-    while IFS='=' read -r key val; do
-      [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
-      val="${val%\"}" ; val="${val#\"}" ; val="${val%\'}" ; val="${val#\'}"
-      [ -z "${!key:-}" ] && export "$key=$val"
-    done < "$HOME/.hermes/.keys"
-  fi
-}
-
-# ──────────────────────────────────────────────────────────────
-#  Agent Mode
-# ──────────────────────────────────────────────────────────────
-lsmod_agent() {
-  lsmod_ensure
-  lsmod_load_keys
-
-  echo -e "${MAGENTA}${BOLD}"
-  echo " ╔══════════════════════════════════════════════════════╗"
-  echo " ║  🤖 lsmod — Agent Mode                              ║"
-  echo " ╚══════════════════════════════════════════════════════╝"
-  echo -e "${RESET}"
-
-  local prompt="${*:-}"
-  if [ -z "$prompt" ]; then
-    echo -e "  ${YELLOW}Usage:${RESET} roc-ai agent <task>"
-    echo -e "  ${DIM}Example: roc-ai agent 'analyze this codebase'${RESET}"
-    return 0
-  fi
-
-  # Delegate to roc-agent (hermes) with agent mode
-  if command -v roc-agent &>/dev/null; then
-    echo -e "${CYAN}[*] Delegating to roc-agent...${RESET}"
-    exec roc-agent agent "$prompt"
-  else
-    # Fallback: use lsmod's node CLI
-    if [ -f "$LSMOD_DIR/termux/lasokamodule.js" ] && command -v node &>/dev/null; then
-      cd "$LSMOD_DIR" && node termux/lasokamodule.js menu
-    else
-      echo -e "${RED}[✗] roc-agent tidak tersedia. Jalankan: roc-agent setup${RESET}"
-      return 1
-    fi
-  fi
-}
-
-# ──────────────────────────────────────────────────────────────
-#  Chat Mode
-# ──────────────────────────────────────────────────────────────
-lsmod_chat() {
-  lsmod_load_keys
-
-  echo -e "${CYAN}${BOLD}"
-  echo " ╔══════════════════════════════════════════════════════╗"
-  echo " ║  💬 lsmod — Chat Mode                               ║"
-  echo " ╚══════════════════════════════════════════════════════╝"
-  echo -e "${RESET}"
-
-  # Delegate to roc-agent chat
-  if command -v roc-agent &>/dev/null; then
-    exec roc-agent chat "${@:-}"
-  else
-    echo -e "${RED}[✗] roc-agent tidak tersedia. Jalankan: roc-agent setup${RESET}"
-    return 1
-  fi
-}
-
-# ──────────────────────────────────────────────────────────────
-#  Coding Mode
-# ──────────────────────────────────────────────────────────────
-lsmod_coding() {
-  lsmod_load_keys
-
-  echo -e "${GREEN}${BOLD}"
-  echo " ╔══════════════════════════════════════════════════════╗"
-  echo " ║  💻 lsmod — Coding Mode                             ║"
-  echo " ╚══════════════════════════════════════════════════════╝"
-  echo -e "${RESET}"
-
-  local task="${*:-}"
-  if [ -z "$task" ]; then
-    echo -e "  ${YELLOW}Usage:${RESET} roc-ai code <task>"
-    echo -e "  ${DIM}Example: roc-ai code 'write a python web scraper'${RESET}"
-    return 0
-  fi
-
-  if command -v roc-agent &>/dev/null; then
-    exec roc-agent code "$task"
-  else
-    echo -e "${RED}[✗] roc-agent tidak tersedia. Jalankan: roc-agent setup${RESET}"
-    return 1
-  fi
-}
-
-# ──────────────────────────────────────────────────────────────
-#  Error Handler
-# ──────────────────────────────────────────────────────────────
-lsmod_error() {
-  lsmod_load_keys
-
-  echo -e "${RED}${BOLD}"
-  echo " ╔══════════════════════════════════════════════════════╗"
-  echo " ║  🐛 lsmod — Error Handler                           ║"
-  echo " ╚══════════════════════════════════════════════════════╝"
-  echo -e "${RESET}"
-
-  local error_msg="${*:-}"
-  if [ -z "$error_msg" ]; then
-    echo -e "  ${YELLOW}Usage:${RESET} roc-ai error <error_message>"
-    echo -e "  ${DIM}Example: roc-ai error 'ModuleNotFoundError: No module named flask'${RESET}"
-    return 0
-  fi
-
-  if command -v roc-agent &>/dev/null; then
-    exec roc-agent ask "Fix this error: $error_msg"
-  else
-    echo -e "${RED}[✗] roc-agent tidak tersedia. Jalankan: roc-agent setup${RESET}"
-    return 1
-  fi
-}
-
-# ──────────────────────────────────────────────────────────────
-#  Status
-# ──────────────────────────────────────────────────────────────
-lsmod_status() {
-  echo -e "${CYAN}${BOLD}lsmod Module Status:${RESET}\n"
-
-  # Repo
-  if [ -d "$LSMOD_DIR/.git" ]; then
-    local ver=$(git -C "$LSMOD_DIR" describe --tags --always 2>/dev/null || git -C "$LSMOD_DIR" rev-parse --short HEAD 2>/dev/null)
-    echo -e "  ${BOLD}Repo:${RESET}    ${GREEN}✓ installed${RESET}  ${DIM}($ver)${RESET}"
-  else
-    echo -e "  ${BOLD}Repo:${RESET}    ${RED}✗ not cloned${RESET}  ${DIM}(run: roc-ai install)${RESET}"
-  fi
-
-  # Modes
-  local modes_ok=0
-  if command -v roc-agent &>/dev/null; then
-    echo -e "  ${BOLD}Agent:${RESET}   ${GREEN}✓ roc-agent available${RESET}"
-    echo -e "  ${BOLD}Chat:${RESET}    ${GREEN}✓ roc-agent available${RESET}"
-    echo -e "  ${BOLD}Coding:${RESET}  ${GREEN}✓ roc-agent available${RESET}"
-    echo -e "  ${BOLD}Error:${RESET}   ${GREEN}✓ roc-agent available${RESET}"
-    modes_ok=1
-  else
-    echo -e "  ${BOLD}Agent:${RESET}   ${YELLOW}⚠ roc-agent not found${RESET}"
-    echo -e "  ${BOLD}Chat:${RESET}    ${YELLOW}⚠ roc-agent not found${RESET}"
-    echo -e "  ${BOLD}Coding:${RESET}  ${YELLOW}⚠ roc-agent not found${RESET}"
-    echo -e "  ${BOLD}Error:${RESET}   ${YELLOW}⚠ roc-agent not found${RESET}"
-  fi
-
-  # Node.js (lsmod native)
-  if command -v node &>/dev/null; then
-    echo -e "  ${BOLD}Node.js:${RESET} ${GREEN}✓ $(node --version)${RESET}  ${DIM}(lsmod native)${RESET}"
-  else
-    echo -e "  ${BOLD}Node.js:${RESET} ${YELLOW}— not installed${RESET}"
-  fi
-
-  # API Keys
-  lsmod_load_keys
-  local keys_ok=0
-  for k in GROQ_KEY OPENAI_KEY OR_KEY GEMINI_API_KEY; do
-    if [ -n "${!k:-}" ]; then
-      keys_ok=$((keys_ok + 1))
-    fi
-  done
-  if [ "$keys_ok" -gt 0 ]; then
-    echo -e "  ${BOLD}API Keys:${RESET} ${GREEN}✓ $keys_ok configured${RESET}"
-  else
-    echo -e "  ${BOLD}API Keys:${RESET} ${RED}✗ none configured${RESET}  ${DIM}(run: roc-agent setup)${RESET}"
-  fi
-}
-
-# ──────────────────────────────────────────────────────────────
-#  Install / Setup
+#  lsmod Install — setup + propagate ke semua containers
 # ──────────────────────────────────────────────────────────────
 lsmod_install() {
   lsmod_ensure
@@ -233,7 +45,7 @@ lsmod_install() {
   [ -f "$LSMOD_DIR/termux/setup.sh" ] && chmod +x "$LSMOD_DIR/termux/setup.sh"
   [ -f "$LSMOD_DIR/termux/install.sh" ] && chmod +x "$LSMOD_DIR/termux/install.sh"
 
-  # Remove hardcoded keys from config/keys.json (security)
+  # Sanitize hardcoded keys (security)
   if [ -f "$LSMOD_DIR/config/keys.json" ]; then
     echo -e "${YELLOW}[*] Sanitizing hardcoded keys...${RESET}"
     echo '{}' > "$LSMOD_DIR/config/keys.json"
@@ -248,11 +60,220 @@ lsmod_install() {
     echo -e "${GREEN}[✓] lasokamodule command installed${RESET}"
   fi
 
+  # ── Propagate lsmod ke semua AI/Agent containers ──
+  echo -e "${YELLOW}[*] Propagating lsmod to AI & Agent containers...${RESET}"
+
+  local ROC_DIR="$HOME/.roc-containers"
+  local propagated=0
+
+  # CrewAI
+  if [ -d "$ROC_DIR/data-crewai-hermes" ]; then
+    lsmod_propagate "crewai" "crewai-hermes" "$ROC_DIR/data-crewai-hermes"
+    propagated=$((propagated + 1))
+  else
+    echo -e "  ${DIM}○ crewai — no data dir yet${RESET}"
+  fi
+
+  # Hermes Agent (hms)
+  if [ -d "$ROC_DIR/apps/hms/data-root" ]; then
+    lsmod_propagate "hermes-agent" "hermes-agent" "$ROC_DIR/apps/hms/data-root"
+    propagated=$((propagated + 1))
+  else
+    echo -e "  ${DIM}○ hermes-agent — no data dir yet${RESET}"
+  fi
+
+  # ADK Invoice
+  if [ -d "$ROC_DIR/data-adk-invoice" ]; then
+    lsmod_propagate "adk-invoice" "adk-invoice" "$ROC_DIR/data-adk-invoice"
+    propagated=$((propagated + 1))
+  else
+    echo -e "  ${DIM}○ adk-invoice — no data dir yet${RESET}"
+  fi
+
+  # Antigravity
+  if [ -d "$ROC_DIR/data-antigravity-hermes" ]; then
+    lsmod_propagate "antigravity" "antigravity-hermes" "$ROC_DIR/data-antigravity-hermes"
+    propagated=$((propagated + 1))
+  else
+    echo -e "  ${DIM}○ antigravity — no data dir yet${RESET}"
+  fi
+
+  echo -e "\n  ${GREEN}[✓] Propagated to $propagated container(s)${RESET}"
   echo -e "${GREEN}[✓] lsmod module system ready${RESET}"
 }
 
 # ──────────────────────────────────────────────────────────────
-#  lsmod native (lasokamodule)
+#  lsmod Orchestrate — ⭐ fitur istimewa roc-ai
+#  Koordinasi semua AI agents untuk task kompleks
+# ──────────────────────────────────────────────────────────────
+lsmod_orchestrate() {
+  lsmod_load_keys
+  local task="$1"
+
+  if [ -z "$task" ]; then
+    echo -e "${YELLOW}[lsmod] Usage: roc-ai orchestrate <task>${RESET}"
+    echo -e "  ${DIM}Orkestrasi semua AI agents untuk task kompleks${RESET}"
+    return 1
+  fi
+
+  echo -e "${MAGENTA}${BOLD}"
+  echo " ╔══════════════════════════════════════════════════════╗"
+  echo " ║  🎼 lsmod — Orchestration Mode                      ║"
+  echo " ║  Semua AI Agents terhubung via roc-containers        ║"
+  echo " ╚══════════════════════════════════════════════════════╝"
+  echo -e "${RESET}"
+
+  echo -e "  ${BOLD}Task:${RESET} $task\n"
+
+  # Phase 1: Analyze task
+  echo -e "  ${CYAN}[1/3] Analyzing task...${RESET}"
+  local analysis
+  if command -v roc-agent &>/dev/null; then
+    analysis=$(roc-agent ask "Categorize this task and suggest which AI agents should handle it. Task: $task. Available agents: roc-agent (general AI), crewai (multi-agent), hermes-agent (autonomous), adk-invoice (document processing). Reply in one line." 2>/dev/null || echo "general")
+  else
+    analysis="general"
+  fi
+  echo -e "  ${DIM}Analysis: $analysis${RESET}\n"
+
+  # Phase 2: Route ke agents
+  echo -e "  ${CYAN}[2/3] Routing to agents...${RESET}"
+  local routed=0
+
+  # Primary: roc-agent
+  if command -v roc-agent &>/dev/null; then
+    echo -e "  ${GREEN}●${RESET} roc-agent → primary handler"
+    routed=$((routed + 1))
+  fi
+
+  # Check if task needs crewai
+  case "$analysis" in
+    *crew*|*multi*|*team*|*collaborat*)
+      if [ -f "$ROC_DIR/apps/crewai/crewai.sh" ]; then
+        echo -e "  ${GREEN}●${RESET} crewai → multi-agent coordination"
+        routed=$((routed + 1))
+      fi
+      ;;
+  esac
+
+  # Check if task needs hermes
+  case "$analysis" in
+    *autonom*|*tool*|*action*|*execut*)
+      if [ -f "$ROC_DIR/apps/hms/hms.sh" ]; then
+        echo -e "  ${GREEN}●${RESET} hermes-agent → autonomous execution"
+        routed=$((routed + 1))
+      fi
+      ;;
+  esac
+
+  # Check if task needs ADK
+  case "$analysis" in
+    *invoice*|*document*|*pdf*|*process*)
+      if [ -f "$ROC_DIR/apps/adk-invoice/adk-invoice.sh" ]; then
+        echo -e "  ${GREEN}●${RESET} adk-invoice → document processing"
+        routed=$((routed + 1))
+      fi
+      ;;
+  esac
+
+  echo -e "\n  ${DIM}Routed to $routed agent(s)${RESET}\n"
+
+  # Phase 3: Execute
+  echo -e "  ${CYAN}[3/3] Executing...${RESET}"
+  lsmod_agent "$task"
+}
+
+# ──────────────────────────────────────────────────────────────
+#  lsmod Mesh — cek koneksi semua AI agents
+# ──────────────────────────────────────────────────────────────
+lsmod_mesh() {
+  echo -e "${CYAN}${BOLD}"
+  echo " ╔══════════════════════════════════════════════════════╗"
+  echo " ║  🕸️ lsmod — AI Agent Mesh                           ║"
+  echo " ║  Status koneksi semua AI containers                 ║"
+  echo " ╚══════════════════════════════════════════════════════╝"
+  echo -e "${RESET}"
+
+  local ROC_DIR="$HOME/.roc-containers"
+  local total=0; local online=0
+
+  # roc-agent (Termux native)
+  total=$((total + 1))
+  if command -v roc-agent &>/dev/null; then
+    echo -e "  ${GREEN}● ONLINE${RESET}  roc-agent       ${DIM}Termux native${RESET}"
+    online=$((online + 1))
+  else
+    echo -e "  ${RED}○ OFFLINE${RESET} roc-agent       ${DIM}not found${RESET}"
+  fi
+
+  # CrewAI
+  total=$((total + 1))
+  if udocker inspect crewai-hermes &>/dev/null 2>&1; then
+    echo -e "  ${GREEN}● ONLINE${RESET}  roc-crewai      ${DIM}container ready${RESET}"
+    online=$((online + 1))
+  else
+    echo -e "  ${DIM}○ STANDBY${RESET} roc-crewai      ${DIM}container not created${RESET}"
+  fi
+
+  # Hermes Agent
+  total=$((total + 1))
+  if udocker inspect hermes-agent &>/dev/null 2>&1; then
+    echo -e "  ${GREEN}● ONLINE${RESET}  roc-hms         ${DIM}container ready${RESET}"
+    online=$((online + 1))
+  else
+    echo -e "  ${DIM}○ STANDBY${RESET} roc-hms         ${DIM}container not created${RESET}"
+  fi
+
+  # ADK Invoice
+  total=$((total + 1))
+  if udocker inspect adk-invoice &>/dev/null 2>&1; then
+    echo -e "  ${GREEN}● ONLINE${RESET}  roc-adk         ${DIM}container ready${RESET}"
+    online=$((online + 1))
+  else
+    echo -e "  ${DIM}○ STANDBY${RESET} roc-adk         ${DIM}container not created${RESET}"
+  fi
+
+  # Antigravity
+  total=$((total + 1))
+  if udocker inspect antigravity-hermes &>/dev/null 2>&1; then
+    echo -e "  ${GREEN}● ONLINE${RESET}  roc-antigravity ${DIM}container ready${RESET}"
+    online=$((online + 1))
+  else
+    echo -e "  ${DIM}○ STANDBY${RESET} roc-antigravity ${DIM}container not created${RESET}"
+  fi
+
+  # MAAGBA (clone-based, no container)
+  total=$((total + 1))
+  if [ -d "$ROC_DIR/apps/maagba/maagba-repo/.git" ]; then
+    echo -e "  ${GREEN}● ONLINE${RESET}  roc-maagba      ${DIM}repo cloned${RESET}"
+    online=$((online + 1))
+  else
+    echo -e "  ${DIM}○ STANDBY${RESET} roc-maagba      ${DIM}not cloned${RESET}"
+  fi
+
+  # Hermes UI
+  total=$((total + 1))
+  if [ -d "$ROC_DIR/apps/hermui/hermes-ui/.git" ]; then
+    echo -e "  ${GREEN}● ONLINE${RESET}  roc-hermui      ${DIM}repo cloned${RESET}"
+    online=$((online + 1))
+  else
+    echo -e "  ${DIM}○ STANDBY${RESET} roc-hermui      ${DIM}not cloned${RESET}"
+  fi
+
+  # Clawdex
+  total=$((total + 1))
+  if [ -d "$ROC_DIR/apps/clawdex/clawdex-mobile/.git" ]; then
+    echo -e "  ${GREEN}● ONLINE${RESET}  roc-clawdex     ${DIM}repo cloned${RESET}"
+    online=$((online + 1))
+  else
+    echo -e "  ${DIM}○ STANDBY${RESET} roc-clawdex     ${DIM}not cloned${RESET}"
+  fi
+
+  echo -e "\n  ${BOLD}Mesh Status:${RESET} ${online}/${total} agents available"
+  echo -e "  ${BOLD}lsmod Propagation:${RESET} ${GREEN}active${RESET}  ${DIM}(lib/lsmod_loader.sh)${RESET}"
+}
+
+# ──────────────────────────────────────────────────────────────
+#  lsmod Native — run lasokamodule native CLI
 # ──────────────────────────────────────────────────────────────
 lsmod_native() {
   lsmod_ensure
@@ -275,28 +296,35 @@ lsmod_main() {
   if [ -z "$cmd" ]; then
     echo -e "${MAGENTA}${BOLD}"
     echo " ╔══════════════════════════════════════════════════════╗"
-    echo " ║  lsmod — Module System for roc-ai                   ║"
+    echo " ║  lsmod — Module System ⭐ Pewaris roc-ai            ║"
     echo " ║  ivansslo/lsmod                                     ║"
     echo " ╚══════════════════════════════════════════════════════╝"
     echo -e "${RESET}"
-    echo -e " ${BOLD}Modes:${RESET}"
-    echo -e "  ${CYAN}roc-ai agent <task>${RESET}  🤖 Agent Mode"
-    echo -e "  ${CYAN}roc-ai chat${RESET}         💬 Chat Mode (interactive)"
-    echo -e "  ${CYAN}roc-ai code <task>${RESET>  💻 Coding Mode"
-    echo -e "  ${CYAN}roc-ai error <msg>${RESET}  🐛 Error Handler"
+    echo -e " ${BOLD}${MAGENTA}lsmod Modes:${RESET}"
+    echo -e "  ${CYAN}agent <task>${RESET}      🤖 Agent Mode"
+    echo -e "  ${CYAN}chat${RESET}              💬 Chat Mode (interactive)"
+    echo -e "  ${CYAN}code <task>${RESET}       💻 Coding Mode"
+    echo -e "  ${CYAN}error <msg>${RESET}       🐛 Error Handler / Fix"
+    echo ""
+    echo -e " ${BOLD}${CYAN}⭐ roc-ai Special (Pewaris):${RESET}"
+    echo -e "  ${CYAN}orchestrate <task>${RESET} 🎼 Orchestrate all AI agents"
+    echo -e "  ${CYAN}route <task> [ctx]${RESET} 🧭 Route to best agent"
+    echo -e "  ${CYAN}broadcast <msg>${RESET}   📢 Broadcast to all agents"
+    echo -e "  ${CYAN}mesh${RESET}              🕸️  AI Agent Mesh status"
     echo ""
     echo -e " ${BOLD}Management:${RESET}"
-    echo -e "  ${CYAN}roc-ai install${RESET}    Install lsmod + dependencies"
-    echo -e "  ${CYAN}roc-ai status${RESET}     Check module & service status"
-    echo -e "  ${CYAN}roc-ai native${RESET}     Run lasokamodule native CLI"
-    echo -e "  ${CYAN}roc-ai update${RESET}     Update lsmod to latest"
+    echo -e "  ${CYAN}install${RESET}           Install + propagate to containers"
+    echo -e "  ${CYAN}status${RESET}            Check module & service status"
+    echo -e "  ${CYAN}native${RESET}            Run lasokamodule native CLI"
+    echo -e "  ${CYAN}update${RESET}            Update lsmod to latest"
     echo ""
+    echo -e " ${DIM}Spreads via: lib/lsmod_loader.sh → all roc-*${RESET}"
     echo -e " ${DIM}Repo: ivansslo/lsmod${RESET}"
-    echo -e " ${DIM}Path: $LSMOD_DIR${RESET}"
     return 0
   fi
 
   case "$cmd" in
+    # ── Modes ──
     agent|a)
       lsmod_agent "$@"
       ;;
@@ -304,11 +332,27 @@ lsmod_main() {
       lsmod_chat "$@"
       ;;
     code|coding|co)
-      lsmod_coding "$@"
+      lsmod_code "$@"
       ;;
     error|err|e|fix)
       lsmod_error "$@"
       ;;
+
+    # ── ⭐ roc-ai Special ──
+    orchestrate|orch|o)
+      lsmod_orchestrate "$@"
+      ;;
+    route|r)
+      lsmod_route "$@"
+      ;;
+    broadcast|bcast|b)
+      lsmod_broadcast "$@"
+      ;;
+    mesh)
+      lsmod_mesh
+      ;;
+
+    # ── Management ──
     install|setup|i)
       lsmod_install
       ;;

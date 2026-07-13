@@ -306,7 +306,13 @@ ai_main() {
     echo -e "  ${CYAN}roc-ai code <task>${RESET}   💻 Coding Mode"
     echo -e "  ${CYAN}roc-ai error <msg>${RESET}   🐛 Error Handler / Fix"
     echo ""
-    echo -e " ${BOLD}${CYAN}Management:${RESET}"
+    echo -e " ${BOLD}${CYAN}⭐ Pewaris lsmod (Special):${RESET}"
+    echo -e "  ${CYAN}roc-ai orchestrate <t>${RESET} 🎼 Orchestrate all AI agents"
+    echo -e "  ${CYAN}roc-ai route <task>${RESET}    🧭 Route to best agent"
+    echo -e "  ${CYAN}roc-ai broadcast <msg>${RESET} 📢 Broadcast to all agents"
+    echo -e "  ${CYAN}roc-ai mesh${RESET}            🕸️  AI Agent Mesh status"
+    echo ""
+    echo -e " ${BOLD}${BLUE}Management:${RESET}"
     echo -e "  ${CYAN}roc-ai install${RESET}      Install stack + lsmod modules"
     echo -e "  ${CYAN}roc-ai run${RESET}          Start AI stack services"
     echo -e "  ${CYAN}roc-ai status${RESET}       Check all services & keys"
@@ -352,6 +358,38 @@ ai_main() {
       shift
       if [ -f "$LSMOD_SH" ]; then
         bash "$LSMOD_SH" error "$@"
+      else
+        echo -e "${RED}[✗] lsmod not found. Run: roc-ai install${RESET}"
+      fi
+      ;;
+    # ── ⭐ lsmod Special (Pewaris) ──
+    orchestrate|orch|o)
+      shift
+      if [ -f "$LSMOD_SH" ]; then
+        bash "$LSMOD_SH" orchestrate "$@"
+      else
+        echo -e "${RED}[✗] lsmod not found. Run: roc-ai install${RESET}"
+      fi
+      ;;
+    route|r)
+      shift
+      if [ -f "$LSMOD_SH" ]; then
+        bash "$LSMOD_SH" route "$@"
+      else
+        echo -e "${RED}[✗] lsmod not found. Run: roc-ai install${RESET}"
+      fi
+      ;;
+    broadcast|bcast|b)
+      shift
+      if [ -f "$LSMOD_SH" ]; then
+        bash "$LSMOD_SH" broadcast "$@"
+      else
+        echo -e "${RED}[✗] lsmod not found. Run: roc-ai install${RESET}"
+      fi
+      ;;
+    mesh)
+      if [ -f "$LSMOD_SH" ]; then
+        bash "$LSMOD_SH" mesh
       else
         echo -e "${RED}[✗] lsmod not found. Run: roc-ai install${RESET}"
       fi
