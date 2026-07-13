@@ -47,7 +47,7 @@ list_containers_detailed() {
                 *debian*)     echo -e "    ${DIM}→ SSH: ssh root@$ip_addr -p 2224 (pass: debian)${RESET}" ;;
                 *alpine*)     echo -e "    ${DIM}→ SSH: ssh root@$ip_addr -p 2225 (pass: alpine)${RESET}" ;;
                 *kali-linux*) echo -e "    ${DIM}→ SSH: ssh root@$ip_addr -p 2222 (pass: kali)${RESET}" ;;
-                *nethunter*)  echo -e "    ${DIM}→ SSH: ssh root@$ip_addr -p 2222 (pass: nethunter)${RESET}" ;;
+                *roadfx-ai*)  echo -e "    ${DIM}→ AI Stack: roc-ai status${RESET}" ;;
                 *windows-11*) echo -e "    ${DIM}→ VNC: $ip_addr:5900 | Web: http://$ip_addr:8006${RESET}" ;;
                 *windows-7*)  echo -e "    ${DIM}→ VNC: $ip_addr:5901 | Web: http://$ip_addr:8007${RESET}" ;;
             esac

@@ -23,12 +23,11 @@ print_header(){
   clear
   echo -e "${CYAN}${BOLD}"
   echo "  ╔══════════════════════════════════════════════════════╗"
-  echo "  ║           roc-containers · Termux Container Manager       ║"
-  echo "  ║               (c) 2026 | @ivansslo                  ║"
+  echo "  ║       roc-containers · Termux Container Manager      ║"
+  echo "  ║               (c) 2026 | @ivansslo                   ║"
   echo "  ╚══════════════════════════════════════════════════════╝"
   echo -e "${RESET}"
 
-  # Quick Status Info
   local containers_count=$(udocker ps 2>/dev/null | tail -n +2 | wc -l | awk '{print $1}')
   echo -e "  ${DIM}OS: $(uname -m) | Containers: $containers_count${RESET}"
 }
@@ -41,11 +40,11 @@ print_item(){
   local num="$1" label="$2" port="$3" cat="$4"
   local color="${CYAN}"
   [ "$cat" = "os" ]  && color="${GREEN}"
-  [ "$cat" = "sec" ] && color="${RED}"
-  [ "$cat" = "sys" ] && color="${MAGENTA}"
-  [ "$cat" = "net" ] && color="${BLUE}"
-  printf "  ${color}${BOLD}[%2s]${RESET}  %-28s" "$num" "$label"
-  [ -n "$port" ] && echo -e "${DIM}→ port $port${RESET}" || echo ""
+  [ "$cat" = "ai" ]  && color="${MAGENTA}"
+  [ "$cat" = "app" ] && color="${BLUE}"
+  [ "$cat" = "sys" ] && color="${DIM}"
+  printf "  ${color}${BOLD}[%2s]${RESET}  %-30s" "$num" "$label"
+  [ -n "$port" ] && echo -e "${DIM}→ $port${RESET}" || echo ""
 }
 
 ask_port(){
@@ -91,57 +90,76 @@ ensure_udocker(){
 while true; do
   print_header
 
+  # ── ⭐ AI Stack ──
+  print_section "⭐  AI Stack (Primary)"
+  print_item  01  "RoadFX AI Stack"               "roc-ai"   "ai"
+
+  # ── 🤖 AI & Agent ──
+  print_section "🤖  AI & Agent"
+  print_item  02  "AI Agent CLI"                  "roc-agent" "ai"
+  print_item  03  "CrewAI Multi-Agent"            "roc-crewai" "ai"
+  print_item  04  "Hermes Agent (container)"      "roc-hms"   "ai"
+  print_item  05  "Antigravity AI IDE"            "port 5905" "ai"
+  print_item  06  "ADK Invoice Processing"        "port 8000" "ai"
+  print_item  07  "MAAGBA (Bedrock AgentCore)"    "roc-maagba" "ai"
+
+  # ── 🐧 OS Containers ──
   print_section "🐧  Operating Systems"
-  print_item  01  "Ubuntu 22.04 LTS"               2223  "os"
-  print_item  02  "Debian 12 Bookworm"             2224  "os"
+  print_item  08  "Ubuntu 22.04 LTS"              "port 2223" "os"
+  print_item  09  "Debian 12 Bookworm"            "port 2224" "os"
 
-  print_section "🛡️  Security & Pentest"
-  print_item  03  "Kali NetHunter (Full)"          2222  "sec"
-  print_item  04  "Hermes UI"                       ""    "app"
+  # ── 🌐 Network & Services ──
+  print_section "🌐  Network & Services"
+  print_item  10  "Tailscale VPN"                 "roc-tailscale" "app"
+  print_item  11  "HTTP Server"                   "port 3000"  "app"
+  print_item  12  "Superpowers (agent skills)"    "roc-spwr"   "app"
+  print_item  13  "Hermes UI"                     "roc-hermui" "app"
+  print_item  14  "Clawdex Mobile"                "roc-clawdex" "app"
 
-  print_section "☁️  Apps & Dev"
-  print_item  05  "JupyterLab / Dev"               8888  "app"
-
-  print_section "⌨️  CLI Command"
-  print_item  06  "CLI Command (CrewAI/Tailscale/HTTP)" ""  "net"
-
-  print_section "🟦  Google Project"
-  print_item  07  "Google Project (GCP tools)"     ""    "net"
-
-  print_section "🔧  System Utilities"
-  print_item  08  "Container Manager (ID/Status)"  ""    "sys"
-  print_item  09  "System Info (RAM/CPU)"          ""    "sys"
-  print_item  10  "Uninstall / Clean"              ""    "sys"
-  print_item  11  "Update roc-containers"                ""    "sys"
-  print_item  12  "Reinstall udocker"              ""    "sys"
-  print_item  00  "Exit"                           ""    "sys"
+  # ── ⚙️ System ──
+  print_section "⚙️  System"
+  print_item  15  "Container Manager (Status)"    ""  "sys"
+  print_item  16  "Google Cloud (GCP)"            ""  "sys"
+  print_item  17  "System Info (RAM/CPU)"         ""  "sys"
+  print_item  18  "Update roc-containers"         ""  "sys"
+  print_item  19  "Uninstall / Clean"             ""  "sys"
+  print_item  20  "Reinstall udocker"             ""  "sys"
+  print_item  00  "Exit"                          ""  "sys"
 
   echo ""
-  echo -en "  ${BOLD}Select option [00-12]: ${RESET}"
+  echo -en "  ${BOLD}Select option [00-20]: ${RESET}"
   read -r choice
 
   case "$choice" in
-    1|01) ensure_udocker; launch_with_port "$SCRIPT_DIR/os/ubuntu/ubuntu.sh" 2223 ;;
-    2|02) ensure_udocker; launch_with_port "$SCRIPT_DIR/os/debian/debian.sh" 2224 ;;
+    # ── ⭐ AI Stack ──
+    1|01) run_script "$SCRIPT_DIR/apps/ai/ai.sh" ;;
 
-    3|03)
-      ensure_udocker
-      echo -e "\n  ${RED}${BOLD}[!] Large download (kali-linux-headless)${RESET}"
-      echo -en "  Continue? [y/N]: " ; read -r confirm
-      [[ "${confirm,,}" == "y" ]] && launch_with_port "$SCRIPT_DIR/os/nethunter/nethunter.sh" 2222
-      ;;
-    4|04) run_script "$SCRIPT_DIR/apps/hermui/hermui.sh" ;;
+    # ── 🤖 AI & Agent ──
+    2|02) bash "$PREFIX/bin/roc-agent" "${@:-}" ;;
+    3|03) ensure_udocker; run_script "$SCRIPT_DIR/apps/crewai/crewai.sh" ;;
+    4|04) ensure_udocker; run_script "$SCRIPT_DIR/apps/hms/hms.sh" ;;
+    5|05) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/antigravity/antigravity.sh" 5905 ;;
+    6|06) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/adk-invoice/adk-invoice.sh" 8000 ;;
+    7|07) run_script "$SCRIPT_DIR/apps/maagba/maagba.sh" ;;
 
-    5|05) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/jupyter/jupyter.sh" 8888 ;;
-    6|06) run_script "$SCRIPT_DIR/lib/cli_command.sh" ;;
+    # ── 🐧 OS Containers ──
+    8|08) ensure_udocker; launch_with_port "$SCRIPT_DIR/os/ubuntu/ubuntu.sh" 2223 ;;
+    9|09) ensure_udocker; launch_with_port "$SCRIPT_DIR/os/debian/debian.sh" 2224 ;;
 
-    7|07) run_script "$SCRIPT_DIR/lib/google_project.sh" ;;
+    # ── 🌐 Network & Services ──
+    10) ensure_udocker; run_script "$SCRIPT_DIR/apps/tailscale/tailscale.sh" ;;
+    11) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/httpd/httpd.sh" 3000 ;;
+    12) run_script "$SCRIPT_DIR/apps/spwr/spwr.sh" ;;
+    13) run_script "$SCRIPT_DIR/apps/hermui/hermui.sh" ;;
+    14) run_script "$SCRIPT_DIR/apps/clawdex/clawdex.sh" ;;
 
-    8|08) ensure_udocker; run_script "$SCRIPT_DIR/lib/manager.sh" ;;
-    9|09) run_script "$SCRIPT_DIR/lib/sysinfo.sh" ;;
-    10) run_script "$SCRIPT_DIR/lib/uninstall.sh" ;;
-    11) run_script "$SCRIPT_DIR/lib/update.sh" ;;
-    12) run_script "$SCRIPT_DIR/install_udocker.sh" ;;
+    # ── ⚙️ System ──
+    15) ensure_udocker; run_script "$SCRIPT_DIR/lib/manager.sh" ;;
+    16) run_script "$SCRIPT_DIR/lib/google_project.sh" ;;
+    17) run_script "$SCRIPT_DIR/lib/sysinfo.sh" ;;
+    18) run_script "$SCRIPT_DIR/lib/update.sh" ;;
+    19) run_script "$SCRIPT_DIR/lib/uninstall.sh" ;;
+    20) run_script "$SCRIPT_DIR/install_udocker.sh" ;;
 
     0|00|q|Q|exit) echo -e "\n  Goodbye.\n" ; exit 0 ;;
     *) echo -e "\n  Invalid option." ; sleep 1 ;;
