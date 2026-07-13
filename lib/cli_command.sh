@@ -76,17 +76,19 @@ while true; do
   echo -e "  ${YELLOW}${BOLD}[1]${RESET}  Hermes Agent (autonomous)     ${DIM}venv · root${RESET}"
   echo -e "  ${CYAN}${BOLD}[2]${RESET}  CrewAI (Hermes / Groq)        ${DIM}CLI${RESET}"
   echo -e "  ${BLUE}${BOLD}[3]${RESET}  Tailscale (container node)     ${DIM}udocker${RESET}"
-  echo -e "  ${GREEN}${BOLD}[4]${RESET}  Python HTTP Server            ${DIM}→ port 3000${RESET}"
+  echo -e "  ${GREEN}${BOLD}[4]${RESET}  roc-agent CLI (Termux)       ${DIM}AI chat/ask/code${RESET}"
+  echo -e "  ${DIM}[5]${RESET}  Python HTTP Server            ${DIM}→ port 3000${RESET}"            ${DIM}→ port 3000${RESET}"
   echo -e "  ${MAGENTA}${BOLD}[0]${RESET}  Back to Main Menu"
   echo ""
-  echo -en "  ${BOLD}Select [0-4]: ${RESET}"
+  echo -en "  ${BOLD}Select [0-5]: ${RESET}"
   read -r c
 
   case "$c" in
     1) cli_ensure_udocker; hermes_agent_submenu ;;
     2) cli_ensure_udocker; cli_run "$ROOT_DIR/apps/crewai/crewai.sh" ;;
     3) cli_ensure_udocker; cli_run "$ROOT_DIR/apps/tailscale/tailscale.sh" ;;
-    4) PORT=3000 cli_run "$CLI_DIR/pyhttp.sh" ;;
+    4) bash "$PREFIX/bin/roc-agent" "${@:-}" ;;
+    5) PORT=3000 cli_run "$CLI_DIR/pyhttp.sh" ;;
     0|q|Q) exit 0 ;;
     *) echo -e "\n  ${RED}Invalid.${RESET}"; sleep 1 ;;
   esac

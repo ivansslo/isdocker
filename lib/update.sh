@@ -11,7 +11,10 @@ echo -e "\n${YELLOW}[*] Checking for updates...${RESET}"
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit
 
 if git pull; then
-    echo -e "${GREEN}[✓] Repository updated successfully!${RESET}"
+    echo -e "${GREEN}[✓] Repository updated!${RESET}"
+    echo -e "${YELLOW}[*] Re-installing commands...${RESET}"
+    bash "$(pwd)/setup.sh"
+    echo -e "${GREEN}[✓] Commands updated!${RESET}"
 else
     echo -e "${RED}[!] Update failed. Check your internet connection.${RESET}"
 fi
