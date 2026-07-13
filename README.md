@@ -48,7 +48,7 @@ Setelah install, semua command langsung tersedia:
 | `roc-tailscale` | Tailscale VPN (container node) |
 | `roc-jupyter` | JupyterLab (port 8888) |
 | `roc-httpd` | HTTP Server (port 3000) |
-| `roc-redis` | Redis Server |
+| `roc-spwr` | Superpowers (coding agent skills) |
 | `roc-ros` | ROS Robot OS |
 | `roc-calibre` | Calibre-Web e-books |
 
