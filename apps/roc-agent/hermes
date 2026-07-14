@@ -84,7 +84,7 @@ PROVIDER="${PROVIDER:-best}"
 # ─── Auto-select model per provider ──────────────────────────────────────────
 _default_model_for() {
   case "$1" in
-    openai|oai)   echo "gpt-4o" ;;
+    openai|oai)   echo "gpt-4.1" ;;
     openrouter|or) echo "anthropic/claude-sonnet-4-5" ;;
     # Prefer Flash as default: free-tier keys often have higher quota than Pro.
     gemini)       echo "gemini-2.5-flash" ;;
@@ -465,7 +465,7 @@ print(json.dumps(msgs))
         ;;
       openai|oai)
         response=$(api_call POST "https://api.openai.com/v1/chat/completions" \
-          "{\"model\":\"$model\",\"messages\":$oai_messages,\"max_tokens\":8192,\"temperature\":0.7}" \
+          "{\"model\":\"$model\",\"messages\":$oai_messages,\"max_tokens\":16384,\"temperature\":0.7}" \
           "Bearer $OPENAI_KEY")
         ;;
       openrouter|or)
@@ -623,7 +623,7 @@ cmd_ask() {
   case "$provider" in
     openai|oai)
       local resp=$(api_call POST "https://api.openai.com/v1/chat/completions" 
-        "{"model":"$model","messages":[{"role":"user","content":$safe_q}],"max_tokens":4096}" 
+        "{"model":"$model","messages":[{"role":"user","content":$safe_q}],"max_tokens":16384}" 
         "Bearer $OPENAI_KEY")
       echo "$resp" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'])" 2>/dev/null || echo "$resp" | head -c 500
       ;;
@@ -675,7 +675,7 @@ cmd_ask_internal() {
   case "$provider" in
     openai|oai)
       resp=$(api_call POST "https://api.openai.com/v1/chat/completions" 
-        "{"model":"$model","messages":[{"role":"system","content":$safe_sys},{"role":"user","content":$safe_q}],"max_tokens":8192,"temperature":0.3}" 
+        "{"model":"$model","messages":[{"role":"system","content":$safe_sys},{"role":"user","content":$safe_q}],"max_tokens":16384,"temperature":0.3}" 
         "Bearer $OPENAI_KEY")
       echo "$resp" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'])" 2>/dev/null || echo "$resp" | head -c 1000
       ;;
@@ -1886,7 +1886,7 @@ cmd_models() {
 
   echo ""
   echo -e "  ${M}🧠 OpenAI (Direct):${N}"
-  for m in "gpt-4o" "gpt-4o-mini" "gpt-4.1" "gpt-4.1-mini" "gpt-4.1-nano" "o3" "o3-mini" "o4-mini"; do
+  for m in "gpt-5" "gpt-5-mini" "gpt-4.1" "gpt-4.1-mini" "gpt-4.1-nano" "gpt-4o" "gpt-4o-mini" "o3-pro" "o3" "o3-mini" "o4-mini" "codex-mini" "gpt-4.5-preview"; do
     printf "    %-45s" "$m"
     if [ -n "$OPENAI_KEY" ]; then
       local code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 \
