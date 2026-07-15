@@ -264,10 +264,10 @@ connect_solace() {
 connect_cfworkers() {
     echo -e "${CYAN}${BOLD}⚡ Cloudflare Workers${RESET}\n"
     echo -e "  ${BOLD}Dashboard:${RESET}"
-    echo "    https://roc-site.certveis.workers.dev"
+    echo "    https://roadfx.biz.id"
     echo ""
     echo -e "  ${BOLD}AI Gateway:${RESET}"
-    echo "    https://ai.certveis.space"
+    echo "    https://ai.roadfx.biz.id"
     echo ""
     echo -e "  ${BOLD}Manage Workers:${RESET}"
     echo "    https://dash.cloudflare.com → Workers & Pages"
@@ -276,7 +276,7 @@ connect_cfworkers() {
     if command -v termux-open-url &>/dev/null; then
         echo -ne "  Buka dashboard di browser? [y/n]: "
         read -r open
-        [ "$open" = "y" ] && termux-open-url "https://roc-site.certveis.workers.dev"
+        [ "$open" = "y" ] && termux-open-url "https://roadfx.biz.id"
     fi
 }
 

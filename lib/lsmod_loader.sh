@@ -388,11 +388,11 @@ lsmod_ensure 2>/dev/null || true
 #  Solace PubSub+ Helper Functions
 # ──────────────────────────────────────────────────────────────
 solace_status() {
-  curl -s "${GATEWAY:-https://hermes-cloudflare.certveis.workers.dev}/solace/status" 2>/dev/null
+  curl -s "${GATEWAY:-https://ai.roadfx.biz.id}/solace/status" 2>/dev/null
 }
 
 solace_queues() {
-  curl -s "${GATEWAY:-https://hermes-cloudflare.certveis.workers.dev}/solace/queues" 2>/dev/null
+  curl -s "${GATEWAY:-https://ai.roadfx.biz.id}/solace/queues" 2>/dev/null
 }
 
 solace_publish() {

@@ -43,3 +43,4 @@ Thumbs.db
 # ─── Solace & Aiven ────────────────────────────
 solace.env
 .config/hermes/
+SECRETS-MASTER.env

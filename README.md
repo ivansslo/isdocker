@@ -2,7 +2,7 @@
 
 **Container Manager + AI Agent CLI for Termux** — Run Docker images di Termux tanpa root, dengan [udocker](https://github.com/indigo-dc/udocker).
 
-> **Created by: ivansslo (2026)** · **License: MIT**
+> **v1.2.0** · Created by: ivansslo (2026) · **License: MIT**
 
 ---
 
@@ -28,13 +28,13 @@ Setelah install, semua command langsung tersedia:
 ### ⭐ AI Stack (Primary)
 | Command | Fungsi |
 |---|---|
-| `roc-ai` | ⭐ **RoadFX AI Stack** — ivansslo/roadfx-ai-stack |
+| `roc-ai` | ⭐ **RocSpace Monorepo — ivansslo/rocspace** |
 | `roc-ai mesh` | 🕸️ AI Agent Mesh — cek koneksi semua agents |
 
 ### 🤖 AI & Agent
 | Command | Fungsi |
 |---|---|
-| `roc-agent` | AI Agent CLI utama — chat, ask, code, agent |
+| `roc-agent` | AI Agent CLI utama — Hermes v5.9.0 "Unified" |
 | `roc-crewai` | CrewAI multi-agent (Groq/Gemini) |
 | `roc-hms` | Hermes Agent (container, root) |
 | `roc-antigravity` | Antigravity AI IDE (port 5905) |
@@ -310,9 +310,12 @@ roc-ai adalah **pewaris lsmod** — fitur istimewa yang menyebar ke semua AI & A
 |---|---|---|---|
 | PostgreSQL | Aiven (`pg-roadfx`) | AWS ap-southeast-3 | business-8 |
 | Solace PubSub+ | Solace Cloud | Singapore | 5 queues, connected |
-| CF Workers Gateway | Cloudflare | Global | 25+ endpoints |
-| Cloud Run | Google Cloud | us-west1 | AI + Data |
+| CF Workers Gateway v17.1.1 | Cloudflare | Global | 16 models, 14 domains (unified) |
+| Cloud Run (ai-vitality) | Google Cloud | us-west1 | AI + Data |
 | AI Studio | Google | Global | 50 models |
+| Oracle VM (roc-vm) | OCI | Singapore | 1CPU/16GB, PG+Redis |
+| Tailscale VPN | Tailscale | Global | 4 nodes |
+| Uptime Kuma | OCI | Singapore | Monitoring |
 
 ### Aiven (Managed Database)
 - **Project:** `roadfrx-ai`
@@ -335,13 +338,41 @@ roc-ai adalah **pewaris lsmod** — fitur istimewa yang menyebar ke semua AI & A
 
 | Repo | Fungsi |
 |---|---|
+| [⭐ rocspace](https://github.com/ivansslo/rocspace) | **Monorepo utama** — v17.1.1, Turborepo + TypeScript (gateway, site, shared) |
 | [roc-containers](https://github.com/ivansslo/roc-containers) | Container manager (ini) |
-| [roc-agentsroute](https://github.com/ivansslo/roc-agentsroute) | AI Agent CLI utama |
-| [roadfx-ai-stack](https://github.com/ivansslo/roadfx-ai-stack) | ⭐ RoadFX AI Stack (source utama) |
+| [roc-agentsroute](https://github.com/ivansslo/roc-agentsroute) | Hermes AI Agent CLI v5.9.0 |
+| [ai-vitality](https://github.com/ivansslo/ai-vitality) | AI Studio + Cloud Run |
 | [lsmod](https://github.com/ivansslo/lsmod) | Module system (Agent/Chat/Coding/Error) |
 | [clawdex-mobile](https://github.com/ivansslo/clawdex-mobile) | Clawdex Mobile |
 | [hermes-ui](https://github.com/ivansslo/hermes-ui) | Hermes UI |
 | [spwr](https://github.com/ivansslo/spwr) | Superpowers |
+
+### RocSpace Monorepo Structure
+```
+ivansslo/rocspace (Turborepo + esbuild + TypeScript)
+├── packages/shared/      — AI_MODELS, DOMAIN_MAP, utilities
+├── workers/site/         — Unified router (ALL 14 domains → roc-site)
+├── workers/gateway/      — Hermes Gateway v17.1.1 (hermes-cloudflare)
+│   └── src/pages/        — Full HTML: chat, dashboard, crew, crawl, logs, zapier
+└── scripts/              — Build & deploy tools
+```
+
+### Key Endpoints (roadfx.biz.id)
+```
+ai.roadfx.biz.id        → Gateway (AI, Solace, Crawl, Auth)
+gateway.roadfx.biz.id   → Gateway mirror
+api.roadfx.biz.id       → Gateway backup
+chat.roadfx.biz.id      → Chat-Live
+dashboard.roadfx.biz.id → Dashboard
+factory.roadfx.biz.id   → CF AI Factory
+app.roadfx.biz.id       → Links Hub
+auth.roadfx.biz.id      → Clerk Auth
+vm.roadfx.biz.id        → Oracle VM (redirect)
+r2.roadfx.biz.id        → R2 Explorer
+status.roadfx.biz.id    → Status page
+webhook.roadfx.biz.id   → Webhook receiver
+cloudrun.roadfx.biz.id  → CloudRun proxy
+```
 
 ---
 
