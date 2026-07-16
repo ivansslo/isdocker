@@ -22,8 +22,8 @@
 
 ### 1. CLERK_SECRET_KEY in Cloud Run — WRONG VALUE
 ```
-Current:  CLERK_SECRET_KEY = pk_test_YXdha2UtY2hpY2tlbi05NS5jbGVyay5hY2NvdW50cy5kZXYk  (PUBLIC KEY!)
-Should be: CLERK_SECRET_KEY = sk_test_0DUF4QTu4UJIvmhoWoaucpVO2tCWxyjMyEGgYogAUD  (SECRET KEY)
+Current:  CLERK_SECRET_KEY = pk_test_XXXXXXX_REDACTED  (PUBLIC KEY!)
+Should be: CLERK_SECRET_KEY = sk_test_XXXXXXX_REDACTED  (SECRET KEY)
 ```
 **This is the same as CLERK_SK** — someone put the public key where the secret key should be.
 
@@ -33,7 +33,7 @@ Should be: CLERK_SECRET_KEY = sk_test_0DUF4QTu4UJIvmhoWoaucpVO2tCWxyjMyEGgYogAUD
 3. Click **"Edit & Deploy New Revision"**
 4. Click the **container** to edit
 5. Find `CLERK_SECRET_KEY` env var
-6. Change value from `pk_test_YXdha2UtY2hpY2tlbi05NS5jbGVyay5hY2NvdW50cy5kZXYk` to `sk_test_0DUF4QTu4UJIvmhoWoaucpVO2tCWxyjMyEGgYogAUD`
+6. Change value from `pk_test_XXXXXXX_REDACTED` to `sk_test_XXXXXXX_REDACTED`
 7. Click **Deploy**
 
 ### 2. Duplicate/Redundant Env Vars
@@ -91,6 +91,6 @@ All certveis.space subdomains will work once NS is fixed.
 gcloud run services update ai-vitality \
   --region us-west1 \
   --project yttriferous-magpie-16ppv \
-  --update-env-vars "CLERK_SECRET_KEY=sk_test_0DUF4QTu4UJIvmhoWoaucpVO2tCWxyjMyEGgYogAUD" \
+  --update-env-vars "CLERK_SECRET_KEY=sk_test_XXXXXXX_REDACTED" \
   --update-env-vars "APP_URL=https://roadfx.biz.id"
 ```
