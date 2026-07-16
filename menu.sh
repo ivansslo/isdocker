@@ -4,6 +4,11 @@
 #  License: MIT
 #  Repo: https://github.com/ivansslo/roc-containers
 # ─────────────────────────────────────────────────────────────────
+#  v1.5.0 — NATIVE ONLY. Semua command berbasis container (udocker)
+#  telah dihapus: roc-ubuntu/debian/httpd/tailscale/hms/crewai/adk/
+#  antigravity. Menjalankan container kini manual via udocker:
+#      udocker run <nama-container>
+# ─────────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -23,13 +28,11 @@ print_header(){
   clear
   echo -e "${CYAN}${BOLD}"
   echo "  ╔══════════════════════════════════════════════════════╗"
-  echo "  ║       roc-containers · Termux Container Manager      ║"
-  echo "  ║               (c) 2026 | @ivansslo                   ║"
+  echo "  ║       roc-containers · AI Agent CLI (native)         ║"
+  echo "  ║               v1.5.0 (c) 2026 | @ivansslo            ║"
   echo "  ╚══════════════════════════════════════════════════════╝"
   echo -e "${RESET}"
-
-  local containers_count=$(udocker ps 2>/dev/null | tail -n +2 | wc -l | awk '{print $1}')
-  echo -e "  ${DIM}OS: $(uname -m) | Containers: $containers_count${RESET}"
+  echo -e "  ${DIM}OS: $(uname -m)${RESET}"
 }
 
 print_section(){
@@ -37,25 +40,13 @@ print_section(){
 }
 
 print_item(){
-  local num="$1" label="$2" port="$3" cat="$4"
+  local num="$1" label="$2" note="$3" cat="$4"
   local color="${CYAN}"
-  [ "$cat" = "os" ]  && color="${GREEN}"
   [ "$cat" = "ai" ]  && color="${MAGENTA}"
   [ "$cat" = "app" ] && color="${BLUE}"
   [ "$cat" = "sys" ] && color="${DIM}"
   printf "  ${color}${BOLD}[%2s]${RESET}  %-30s" "$num" "$label"
-  [ -n "$port" ] && echo -e "${DIM}→ $port${RESET}" || echo ""
-}
-
-ask_port(){
-  local default="$1"
-  echo -en "\n  ${YELLOW}Custom port? (Enter = $default): ${RESET}"
-  read -r user_port
-  if [[ "$user_port" =~ ^[0-9]+$ ]] && [ "$user_port" -gt 1023 ] && [ "$user_port" -lt 65536 ]; then
-    echo "$user_port"
-  else
-    echo "$default"
-  fi
+  [ -n "$note" ] && echo -e "${DIM}→ $note${RESET}" || echo ""
 }
 
 run_script(){
@@ -67,14 +58,6 @@ run_script(){
   fi
   chmod +x "$script"
   bash "$script" "$@"
-}
-
-launch_with_port(){
-  local script="$1" default_port="$2"
-  local port
-  port="$(ask_port "$default_port")"
-  echo -e "\n  ${GREEN}[*] Launching on port $port ...${RESET}\n"
-  PORT="$port" run_script "$script"
 }
 
 ensure_udocker(){
@@ -94,93 +77,65 @@ while true; do
   print_section "⭐  AI Stack (Primary)"
   print_item  01  "RoadFX AI Stack"               "roc-ai"   "ai"
   print_item  02  "AI Agent Mesh"                 "roc-ai mesh" "ai"
+  print_item  03  "🚀 roc-ai Orchestrator"        "roc-ai orchestrator" "ai"
 
   # ── 🤖 AI & Agent ──
   print_section "🤖  AI & Agent"
-  print_item  03  "AI Agent CLI"                  "roc-agent" "ai"
-  print_item  04  "CrewAI Multi-Agent"            "roc-crewai" "ai"
-  print_item  05  "Hermes Agent (container)"      "roc-hms"   "ai"
-  print_item  06  "Antigravity AI IDE"            "port 5905" "ai"
-  print_item  07  "ADK Invoice Processing"        "port 8000" "ai"
-  print_item  08  "MAAGBA (Bedrock AgentCore)"    "roc-maagba" "ai"
-  print_item  22  "🚀 roc-ai Orchestrator"        "roc-ai orchestrator" "ai"
+  print_item  04  "AI Agent CLI"                  "roc-agent" "ai"
+  print_item  05  "MAAGBA (Bedrock AgentCore)"    "roc-maagba" "ai"
 
-  # ── 🐧 OS Containers ──
-  print_section "🐧  Operating Systems"
-  print_item  09  "Ubuntu 22.04 LTS"              "port 2223" "os"
-  print_item  10  "Debian 12 Bookworm"            "port 2224" "os"
-
-  # ── 🌐 Network & Services ──
-  print_section "🌐  Network & Services"
-  print_item  11  "Tailscale VPN"                 "roc-tailscale" "app"
-  print_item  12  "HTTP Server"                   "port 3000"  "app"
-  print_item  13  "Superpowers (agent skills)"    "roc-spwr"   "app"
-  print_item  14  "Hermes UI"                     "roc-hermui" "app"
-  print_item  15  "Clawdex Mobile"                "roc-clawdex" "app"
+  # ── 📦 Apps (native) ──
+  print_section "📦  Apps"
+  print_item  06  "Superpowers (agent skills)"    "roc-spwr"   "app"
+  print_item  07  "Hermes UI (dashboard)"         "roc-hermui" "app"
+  print_item  08  "Clawdex Mobile"                "roc-clawdex" "app"
 
   # ── ⚙️ System ──
   print_section "⚙️  System"
-  print_item  16  "Container Manager (Status)"    ""  "sys"
-  print_item  17  "Google Cloud (GCP)"            ""  "sys"
-  print_item  18  "System Info (RAM/CPU)"         ""  "sys"
-  print_item  19  "Update roc-containers"         ""  "sys"
-  print_item  20  "Uninstall / Clean"             ""  "sys"
-  print_item  21  "Reinstall udocker"             ""  "sys"
+  print_item  09  "Container Status (udocker)"    "run manual: udocker run <nama>"  "sys"
+  print_item  10  "Google Cloud (GCP)"            ""  "sys"
+  print_item  11  "System Info (RAM/CPU)"         ""  "sys"
+  print_item  12  "Update roc-containers"         ""  "sys"
+  print_item  13  "Uninstall / Clean"             ""  "sys"
+  print_item  14  "Install/Repair udocker"        ""  "sys"
+  print_item  15  "Remote Dev Connect"            "codespaces/oracle/aiven" "sys"
   print_item  00  "Exit"                          ""  "sys"
 
   echo ""
-  echo -en "  ${BOLD}Select option [00-22]: ${RESET}"
+  echo -en "  ${BOLD}Select option [00-15]: ${RESET}"
   read -r choice
 
   case "$choice" in
     # ── ⭐ AI Stack ──
     1|01) run_script "$SCRIPT_DIR/apps/ai/ai.sh" ;;
     2|02) run_script "$SCRIPT_DIR/apps/ai/ai.sh" mesh ;;
+    3|03)
+      if command -v roc-ai &>/dev/null; then roc-ai orchestrator
+      else bash "$SCRIPT_DIR/apps/ai/ai.sh" orchestrator; fi
+      ;;
 
     # ── 🤖 AI & Agent ──
-    3|03)
-      if command -v roc-agent &>/dev/null; then
-        roc-agent "${@:-}"
-      elif [ -n "${PREFIX:-}" ] && [ -f "$PREFIX/bin/roc-agent" ]; then
-        bash "$PREFIX/bin/roc-agent" "${@:-}"
-      elif [ -f "$SCRIPT_DIR/apps/roc-agent/hermes" ]; then
-        bash "$SCRIPT_DIR/apps/roc-agent/hermes" "${@:-}"
-      else
-        echo -e "  ${RED}roc-agent belum terinstall — jalankan: bash setup.sh${RESET}"; sleep 2
-      fi
+    4|04)
+      if command -v roc-agent &>/dev/null; then roc-agent "${@:-}"
+      elif [ -n "${PREFIX:-}" ] && [ -f "$PREFIX/bin/roc-agent" ]; then bash "$PREFIX/bin/roc-agent" "${@:-}"
+      elif [ -f "$SCRIPT_DIR/apps/roc-agent/hermes" ]; then bash "$SCRIPT_DIR/apps/roc-agent/hermes" "${@:-}"
+      else echo -e "  ${RED}roc-agent belum terinstall — jalankan: bash setup.sh${RESET}"; sleep 2; fi
       ;;
-    4|04) ensure_udocker; run_script "$SCRIPT_DIR/apps/crewai/crewai.sh" ;;
-    5|05) ensure_udocker; run_script "$SCRIPT_DIR/apps/hms/hms.sh" ;;
-    6|06) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/antigravity/antigravity.sh" 5905 ;;
-    7|07) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/adk-invoice/adk-invoice.sh" 8000 ;;
-    8|08) run_script "$SCRIPT_DIR/apps/maagba/maagba.sh" ;;
-    22)   # roc-ai orchestrator
-      if command -v roc-ai &>/dev/null; then
-        roc-ai orchestrator
-      else
-        echo -e "${YELLOW}roc-ai not in PATH. Running direct...${RESET}"
-        bash "$SCRIPT_DIR/apps/ai/ai.sh" orchestrator
-      fi
-      ;;
+    5|05) run_script "$SCRIPT_DIR/apps/maagba/maagba.sh" ;;
 
-    # ── 🐧 OS Containers ──
-    9|09) ensure_udocker; launch_with_port "$SCRIPT_DIR/os/ubuntu/ubuntu.sh" 2223 ;;
-    10)   ensure_udocker; launch_with_port "$SCRIPT_DIR/os/debian/debian.sh" 2224 ;;
-
-    # ── 🌐 Network & Services ──
-    11) ensure_udocker; run_script "$SCRIPT_DIR/apps/tailscale/tailscale.sh" ;;
-    12) ensure_udocker; launch_with_port "$SCRIPT_DIR/apps/httpd/httpd.sh" 3000 ;;
-    13) run_script "$SCRIPT_DIR/apps/spwr/spwr.sh" ;;
-    14) run_script "$SCRIPT_DIR/apps/hermui/hermui.sh" ;;
-    15) run_script "$SCRIPT_DIR/apps/clawdex/clawdex.sh" ;;
+    # ── 📦 Apps ──
+    6|06) run_script "$SCRIPT_DIR/apps/spwr/spwr.sh" ;;
+    7|07) run_script "$SCRIPT_DIR/apps/hermui/hermui.sh" ;;
+    8|08) run_script "$SCRIPT_DIR/apps/clawdex/clawdex.sh" ;;
 
     # ── ⚙️ System ──
-    16) ensure_udocker; run_script "$SCRIPT_DIR/lib/manager.sh" ;;
-    17) run_script "$SCRIPT_DIR/lib/google_project.sh" ;;
-    18) run_script "$SCRIPT_DIR/lib/sysinfo.sh" ;;
-    19) run_script "$SCRIPT_DIR/lib/update.sh" ;;
-    20) run_script "$SCRIPT_DIR/lib/uninstall.sh" ;;
-    21) run_script "$SCRIPT_DIR/install_udocker.sh" ;;
+    9|09)  ensure_udocker; run_script "$SCRIPT_DIR/lib/manager.sh" ;;
+    10)    run_script "$SCRIPT_DIR/lib/google_project.sh" ;;
+    11)    run_script "$SCRIPT_DIR/lib/sysinfo.sh" ;;
+    12)    run_script "$SCRIPT_DIR/lib/update.sh" ;;
+    13)    run_script "$SCRIPT_DIR/lib/uninstall.sh" ;;
+    14)    run_script "$SCRIPT_DIR/install_udocker.sh" ;;
+    15)    run_script "$SCRIPT_DIR/lib/remote-connect.sh" ;;
 
     0|00|q|Q|exit) echo -e "\n  Goodbye.\n" ; exit 0 ;;
     *) echo -e "\n  Invalid option." ; sleep 1 ;;

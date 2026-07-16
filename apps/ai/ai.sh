@@ -76,18 +76,20 @@ ai_main() {
     echo -e "${RESET}"
     echo -e "  ${BOLD}⭐ Primary AI service — always updated${RESET}\n"
 
-    echo -e " ${BOLD}${MAGENTA}lsmod Modes:${RESET}"
+    echo -e " ${BOLD}${MAGENTA}lsmod v2 Modes (native):${RESET}"
     echo -e "  ${CYAN}roc-ai agent <task>${RESET}  🤖 Agent Mode"
     echo -e "  ${CYAN}roc-ai chat${RESET}          💬 Chat Mode"
     echo -e "  ${CYAN}roc-ai code <task>${RESET}   💻 Coding Mode"
     echo -e "  ${CYAN}roc-ai error <msg>${RESET}   🐛 Error Handler"
     echo ""
-    echo -e " ${BOLD}${CYAN}⭐ Pewaris lsmod (Special):${RESET}"
+    echo -e " ${BOLD}${CYAN}⭐ Routing & Koordinasi:${RESET}"
+    echo -e "  ${CYAN}roc-ai route <task>${RESET}    🧭 Auto-route modul"
+    echo -e "  ${CYAN}roc-ai broadcast <m>${RESET}  📢 Broadcast registry"
     echo -e "  ${CYAN}roc-ai orchestrate <t>${RESET} 🎼 Orchestrate"
-    echo -e "  ${CYAN}roc-ai mesh${RESET}            🕸️  AI Agent Mesh"
+    echo -e "  ${CYAN}roc-ai mesh${RESET}            🕸️  Native Service Mesh"
     echo ""
     echo -e " ${BOLD}${BLUE}Management:${RESET}"
-    echo -e "  ${CYAN}roc-ai install${RESET}      Install stack + lsmod"
+    echo -e "  ${CYAN}roc-ai install${RESET}      Install stack + lsmod (tanpa containers)"
     echo -e "  ${CYAN}roc-ai status${RESET}       Check services"
     echo ""
     echo -e " ${BOLD}${MAGENTA}🧠 Autonomous Orchestrator (NEW):${RESET}"
@@ -118,6 +120,17 @@ ai_main() {
     orchestrate)
       shift
       [ -f "$LSMOD_SH" ] && bash "$LSMOD_SH" orchestrate "$@" || echo -e "${RED}lsmod not found${RESET}"
+      ;;
+    route|r)
+      shift
+      [ -f "$LSMOD_SH" ] && bash "$LSMOD_SH" route "$@" || echo -e "${RED}lsmod not found${RESET}"
+      ;;
+    broadcast|bcast|b)
+      shift
+      [ -f "$LSMOD_SH" ] && bash "$LSMOD_SH" broadcast "$@" || echo -e "${RED}lsmod not found${RESET}"
+      ;;
+    registry|reg)
+      [ -f "$LSMOD_SH" ] && bash "$LSMOD_SH" registry || echo -e "${RED}lsmod not found${RESET}"
       ;;
     mesh)
       [ -f "$LSMOD_SH" ] && bash "$LSMOD_SH" mesh || echo -e "${RED}lsmod not found${RESET}"

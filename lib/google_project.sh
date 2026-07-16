@@ -41,16 +41,6 @@ gp_ask_port(){
   fi
 }
 
-gp_launch(){
-  local script="$1" default_port="$2" port
-  port="$(gp_ask_port "$default_port")"
-  echo -e "\n  ${GREEN}[*] Launching on port $port ...${RESET}\n"
-  PORT="$port" gp_run "$script"
-}
-
-gp_ensure_udocker(){
-  udocker -V &>/dev/null 2>&1 || gp_run "$ROOT_DIR/install_udocker.sh"
-}
 
 # ── menu ─────────────────────────────────────────────────────────
 while true; do
@@ -65,19 +55,13 @@ while true; do
   echo -e "  ${DIM}Provider: key=${local_gemset}  project=${local_proj:-'(unset)'}${RESET}\n"
 
   echo -e "  ${BLUE}${BOLD}[1]${RESET}  Provider GCP (Gemini/Vertex creds)"
-  echo -e "  ${CYAN}${BOLD}[2]${RESET}  Antigravity (Google AI IDE)   ${DIM}→ port 5905${RESET}"
-  echo -e "  ${CYAN}${BOLD}[3]${RESET}  ADK Invoice-Processing        ${DIM}→ port 8000${RESET}"
-  echo -e "  ${CYAN}${BOLD}[4]${RESET}  CrewAI (Gemini)               ${DIM}CLI${RESET}"
   echo -e "  ${MAGENTA}${BOLD}[0]${RESET}  Back to Main Menu"
   echo ""
-  echo -en "  ${BOLD}Select [0-4]: ${RESET}"
+  echo -en "  ${BOLD}Select [0-1]: ${RESET}"
   read -r c
 
   case "$c" in
     1) gp_run "$GP_DIR/gcp_provider.sh" ;;
-    2) gp_ensure_udocker; gp_launch "$ROOT_DIR/apps/antigravity/antigravity.sh" 5905 ;;
-    3) gp_ensure_udocker; gp_launch "$ROOT_DIR/apps/adk-invoice/adk-invoice.sh" 8000 ;;
-    4) gp_ensure_udocker; gp_run "$ROOT_DIR/apps/crewai/crewai-gcp.sh" ;;
     0|q|Q) exit 0 ;;
     *) echo -e "\n  ${RED}Invalid.${RESET}"; sleep 1 ;;
   esac

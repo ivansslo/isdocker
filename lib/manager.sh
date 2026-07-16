@@ -7,10 +7,6 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/source.env"
 
-get_container_ip() {
-    echo "127.0.0.1"
-}
-
 list_containers_detailed() {
     clear
     echo -e "${BLUE}${BOLD}  ╔══════════════════════════════════════════════════════╗"
@@ -20,7 +16,6 @@ list_containers_detailed() {
 
     # Get list of containers
     containers=$(udocker ps | tail -n +2)
-    local ip_addr=$(get_container_ip)
 
     if [ -z "$containers" ]; then
         echo -e "  ${RED}[!] No containers found.${RESET}"
@@ -40,17 +35,6 @@ list_containers_detailed() {
             [ "$status" == "I" ] && display_status="${DIM}Inactive${RESET}"
 
             printf "  %-10s %-18s %-20s %-12s\n" "$id" "$name" "$display_status" "${image:0:12}"
-            
-            # Connection Info
-            case "$name" in
-                *ubuntu*)     echo -e "    ${DIM}→ SSH: ssh root@$ip_addr -p 2223 (pass: ubuntu)${RESET}" ;;
-                *debian*)     echo -e "    ${DIM}→ SSH: ssh root@$ip_addr -p 2224 (pass: debian)${RESET}" ;;
-                *alpine*)     echo -e "    ${DIM}→ SSH: ssh root@$ip_addr -p 2225 (pass: alpine)${RESET}" ;;
-                *kali-linux*) echo -e "    ${DIM}→ SSH: ssh root@$ip_addr -p 2222 (pass: kali)${RESET}" ;;
-                *roadfx-ai*)  echo -e "    ${DIM}→ AI Stack: roc-ai status${RESET}" ;;
-                *windows-11*) echo -e "    ${DIM}→ VNC: $ip_addr:5900 | Web: http://$ip_addr:8006${RESET}" ;;
-                *windows-7*)  echo -e "    ${DIM}→ VNC: $ip_addr:5901 | Web: http://$ip_addr:8007${RESET}" ;;
-            esac
         done <<< "$containers"
     fi
 

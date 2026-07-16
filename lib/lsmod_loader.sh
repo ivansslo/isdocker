@@ -4,24 +4,26 @@
 #  License: MIT
 #  Repo: https://github.com/ivansslo/roc-containers
 # ─────────────────────────────────────────────────────────────────
-#  lsmod Loader — Shared Module System
+#  lsmod Loader v2.0.0 — Native Module System (REFRESH)
 #
-#  Source file ini dari SEMUA roc-* script untuk akses lsmod:
-#    source "$(dirname "${BASH_SOURCE[0]}")/../lib/lsmod_loader.sh"
-#    atau
+#  v2.0.0 (2026-07-16):
+#    - SEMUA integrasi kontainer dihapus (lsmod_propagate, container
+#      data-dir, init.sh injection) — sejalan keputusan v1.5.0:
+#      tidak ada lagi koneksi ke containers.
+#    - Module registry formal: `lsmod registry`
+#    - mesh() kini mengukur layanan NATIVE (bukan container)
+#
+#  Source file ini dari roc-* script:
 #    source "$HOME/.roc-containers/lib/lsmod_loader.sh"
 #
 #  Menyediakan:
-#    - lsmod_agent <task>     → delegasi ke AI agent
-#    - lsmod_chat             → interactive chat
-#    - lsmod_code <task>      → coding assistant
-#    - lsmod_error <msg>      → error handler / fix
-#    - lsmod_load_keys        → load API keys dari env
-#    - lsmod_propagate <app>  → inject lsmod ke container app
-#    - lsmod_status           → cek module status
+#    lsmod_agent <task>   lsmod_chat          lsmod_code <task>
+#    lsmod_error <msg>    lsmod_load_keys     lsmod_route <task>
+#    lsmod_broadcast <m>  lsmod_mesh          lsmod_status
+#    lsmod_registry       lsmod_ensure
 # ─────────────────────────────────────────────────────────────────
 
-LSMOD_LOADER_VERSION="1.0.0"
+LSMOD_LOADER_VERSION="2.0.0"
 LSMOD_DIR="$HOME/.roc-containers/apps/ai/modules/lsmod"
 LSMOD_SH="$HOME/.roc-containers/apps/ai/lsmod.sh"
 ROC_DIR="$HOME/.roc-containers"
@@ -37,7 +39,33 @@ ROC_DIR="$HOME/.roc-containers"
 : "${BOLD:=$'\033[1m'}"; : "${DIM:=$'\033[2m'}"; : "${RESET:=$'\033[0m'}"
 
 # ──────────────────────────────────────────────────────────────
-#  lsmod Ensure — clone jika belum ada
+#  Module Registry — sumber kebenaran modul lsmod (native)
+#  Format: nama|deskripsi|handler
+# ──────────────────────────────────────────────────────────────
+LSMOD_REGISTRY=(
+  "agent|🤖 Agent mode — delegasi tugas otonom|lsmod_agent"
+  "chat|💬 Chat interaktif|lsmod_chat"
+  "code|💻 Coding assistant|lsmod_code"
+  "error|🐛 Error handler & fix|lsmod_error"
+  "route|🧭 Routing task ke modul terbaik|lsmod_route"
+  "broadcast|📢 Broadcast pesan ke semua modul|lsmod_broadcast"
+  "orchestrate|🎼 Koordinasi multi-agent native|lsmod_orchestrate"
+  "mesh|🕸️ Status layanan native|lsmod_mesh"
+)
+
+lsmod_registry() {
+  echo -e "${MAGENTA}${BOLD}lsmod Module Registry v${LSMOD_LOADER_VERSION} (native)${RESET}\n"
+  local entry name desc
+  for entry in "${LSMOD_REGISTRY[@]}"; do
+    name="${entry%%|*}"; desc="${entry#*|}"; desc="${desc%%|*}"
+    printf "  ${CYAN}%-12s${RESET} %s\n" "$name" "$desc"
+  done
+  echo ""
+  echo -e "  ${DIM}${#LSMOD_REGISTRY[@]} modules registered (native-only, no containers)${RESET}"
+}
+
+# ──────────────────────────────────────────────────────────────
+#  lsmod Ensure — modul opsional (repo bila tersedia)
 # ──────────────────────────────────────────────────────────────
 lsmod_ensure() {
   if [ ! -d "$LSMOD_DIR/.git" ]; then
@@ -45,7 +73,7 @@ lsmod_ensure() {
     GIT_TERMINAL_PROMPT=0 git clone --depth 1 https://github.com/ivansslo/lsmod "$LSMOD_DIR" 2>/dev/null
     if [ $? -ne 0 ]; then
       echo -e "${YELLOW}[lsmod] Repo ivansslo/lsmod tidak bisa di-clone (privat/belum rilis/offline).${RESET}"
-      echo -e "${DIM}[lsmod] Mode bawaan tetap jalan: agent/chat/code/error/orchestrate/mesh (via roc-agent).${RESET}"
+      echo -e "${DIM}[lsmod] Mode bawaan tetap jalan: agent/chat/code/error/route/broadcast/orchestrate/mesh.${RESET}"
       return 1
     fi
     # Sanitize hardcoded keys
@@ -62,7 +90,6 @@ lsmod_load_keys() {
   if [ -f "$HOME/.hermes/.keys" ]; then
     while IFS='=' read -r key val; do
       [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
-      # Skip invalid variable names (e.g. ₣IREBASE_API_KEY with Unicode chars)
       [[ ! "$key" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && continue
       val="${val%\"}" ; val="${val#\"}" ; val="${val%\'}" ; val="${val#\'}"
       [ -z "${!key:-}" ] && export "$key=$val"
@@ -71,382 +98,162 @@ lsmod_load_keys() {
 }
 
 # ──────────────────────────────────────────────────────────────
-#  lsmod Agent Mode — delegasi tugas ke AI agent
+#  Delegasi dasar ke roc-agent
 # ──────────────────────────────────────────────────────────────
+_lsmod_need_agent() {
+  if command -v roc-agent &>/dev/null; then return 0
+  elif [ -f "$ROC_DIR/apps/roc-agent/hermes" ]; then return 1   # fallback bundle
+  else return 2; fi
+}
+
+_lsmod_agent_run() {  # <subcmd> <args...>
+  local st; _lsmod_need_agent; st=$?
+  if [ $st -eq 0 ]; then exec roc-agent "$@"
+  elif [ $st -eq 1 ]; then exec bash "$ROC_DIR/apps/roc-agent/hermes" "$@"
+  else
+    echo -e "${RED}[lsmod] roc-agent tidak tersedia. Jalankan: bash setup.sh${RESET}"
+    return 1
+  fi
+}
+
 lsmod_agent() {
   lsmod_load_keys
   local task="${*:-}"
-  if [ -z "$task" ]; then
-    echo -e "${YELLOW}[lsmod] Usage: lsmod_agent <task>${RESET}"
-    return 1
-  fi
-  if command -v roc-agent &>/dev/null; then
-    exec roc-agent agent "$task"
-  else
-    echo -e "${RED}[lsmod] roc-agent tidak tersedia. Jalankan: roc-agent setup${RESET}"
-    return 1
-  fi
+  [ -z "$task" ] && { echo -e "${YELLOW}[lsmod] Usage: lsmod_agent <task>${RESET}"; return 1; }
+  _lsmod_agent_run agent "$task"
 }
 
-# ──────────────────────────────────────────────────────────────
-#  lsmod Chat Mode — interactive chat
-# ──────────────────────────────────────────────────────────────
 lsmod_chat() {
   lsmod_load_keys
-  if command -v roc-agent &>/dev/null; then
-    exec roc-agent chat "${@:-}"
-  else
-    echo -e "${RED}[lsmod] roc-agent tidak tersedia. Jalankan: roc-agent setup${RESET}"
-    return 1
-  fi
+  _lsmod_agent_run chat "${@:-}"
 }
 
-# ──────────────────────────────────────────────────────────────
-#  lsmod Coding Mode — AI coding assistant
-# ──────────────────────────────────────────────────────────────
 lsmod_code() {
   lsmod_load_keys
   local task="${*:-}"
-  if [ -z "$task" ]; then
-    echo -e "${YELLOW}[lsmod] Usage: lsmod_code <task>${RESET}"
-    return 1
-  fi
-  if command -v roc-agent &>/dev/null; then
-    exec roc-agent code "$task"
-  else
-    echo -e "${RED}[lsmod] roc-agent tidak tersedia. Jalankan: roc-agent setup${RESET}"
-    return 1
-  fi
+  [ -z "$task" ] && { echo -e "${YELLOW}[lsmod] Usage: lsmod_code <task>${RESET}"; return 1; }
+  _lsmod_agent_run code "$task"
 }
 
-# ──────────────────────────────────────────────────────────────
-#  lsmod Error Handler — analisis & fix error
-# ──────────────────────────────────────────────────────────────
 lsmod_error() {
   lsmod_load_keys
   local msg="${*:-}"
-  if [ -z "$msg" ]; then
-    echo -e "${YELLOW}[lsmod] Usage: lsmod_error <error_message>${RESET}"
-    return 1
-  fi
-  if command -v roc-agent &>/dev/null; then
-    exec roc-agent ask "Fix this error: $msg"
-  else
-    echo -e "${RED}[lsmod] roc-agent tidak tersedia. Jalankan: roc-agent setup${RESET}"
-    return 1
-  fi
+  [ -z "$msg" ] && { echo -e "${YELLOW}[lsmod] Usage: lsmod_error <error_message>${RESET}"; return 1; }
+  _lsmod_agent_run ask "Fix this error: $msg"
 }
 
 # ──────────────────────────────────────────────────────────────
-#  lsmod Propagate — inject lsmod ke container app
-#  Usage: lsmod_propagate <app_name> <container_name> <data_dir>
-#  Contoh: lsmod_propagate "crewai" "crewai-hermes" "/path/to/data"
-# ──────────────────────────────────────────────────────────────
-lsmod_propagate() {
-  local app_name="$1"
-  local container_name="$2"
-  local data_dir="$3"
-
-  if [ -z "$app_name" ]; then
-    echo -e "${YELLOW}[lsmod] Usage: lsmod_propagate <app_name> <container> <data_dir>${RESET}"
-    return 1
-  fi
-
-  # Ensure lsmod exists
-  lsmod_ensure || return 1
-
-  # Copy lsmod loader into container data dir
-  local target_dir="$data_dir/root/.lsmod"
-  mkdir -p "$target_dir"
-
-  # Copy loader
-  cp "$ROC_DIR/lib/lsmod_loader.sh" "$target_dir/lsmod_loader.sh" 2>/dev/null || true
-
-  # Copy lsmod termux CLI
-  if [ -f "$LSMOD_DIR/termux/lasokamodule.js" ]; then
-    cp "$LSMOD_DIR/termux/lasokamodule.js" "$target_dir/lasokamodule.js" 2>/dev/null || true
-  fi
-
-  # Write a simple init script for the container
-  cat > "$target_dir/init.sh" << 'LSMOD_INIT'
-#!/bin/bash
-# lsmod Container Init — sourced by AI agent containers
-LSMOD_DIR="/root/.lsmod"
-[ -f "$LSMOD_DIR/lsmod_loader.sh" ] && source "$LSMOD_DIR/lsmod_loader.sh" 2>/dev/null || true
-
-# Container-local lsmod functions
-lsmod_container_agent() {
-  local task="$*"
-  if command -v python3 &>/dev/null && [ -f "/root/venv/bin/python" ]; then
-    /root/venv/bin/python -m agent "$task"
-  else
-    echo "[lsmod] Agent not available in this container"
-  fi
-}
-
-lsmod_container_error() {
-  local msg="$*"
-  echo "[lsmod] Error reported: $msg"
-  # Container-local error analysis
-  if command -v python3 &>/dev/null; then
-    /root/venv/bin/python -c "
-import traceback, sys
-print('[lsmod] Error Analysis:')
-print(f'  Message: {sys.argv[1] if len(sys.argv) > 1 else \"N/A\"}')
-print(f'  Python: {sys.version}')
-print(f'  Path: {sys.path[:3]}')
-" "$msg" 2>/dev/null || echo "[lsmod] Python analysis failed"
-  fi
-}
-LSMOD_INIT
-  chmod +x "$target_dir/init.sh" 2>/dev/null || true
-
-  echo -e "${GREEN}[lsmod] ✅ Propagated to $app_name${RESET}  ${DIM}($target_dir)${RESET}"
-}
-
-# ──────────────────────────────────────────────────────────────
-#  lsmod Status — cek module status
-# ──────────────────────────────────────────────────────────────
-lsmod_status() {
-  echo -e "${MAGENTA}${BOLD}lsmod Module System v${LSMOD_LOADER_VERSION}${RESET}\n"
-
-  # Repo
-  if [ -d "$LSMOD_DIR/.git" ]; then
-    local ver=$(git -C "$LSMOD_DIR" describe --tags --always 2>/dev/null || git -C "$LSMOD_DIR" rev-parse --short HEAD 2>/dev/null)
-    echo -e "  ${BOLD}Module:${RESET}  ${GREEN}✓${RESET} lsmod ${DIM}($ver)${RESET}"
-  else
-    echo -e "  ${BOLD}Module:${RESET}  ${RED}✗ not installed${RESET}"
-  fi
-
-  # Loader
-  if [ -f "$ROC_DIR/lib/lsmod_loader.sh" ]; then
-    echo -e "  ${BOLD}Loader:${RESET}  ${GREEN}✓${RESET} lsmod_loader.sh"
-  else
-    echo -e "  ${BOLD}Loader:${RESET}  ${RED}✗ missing${RESET}"
-  fi
-
-  # Agent availability
-  if command -v roc-agent &>/dev/null; then
-    echo -e "  ${BOLD}Agent:${RESET}   ${GREEN}✓${RESET} roc-agent"
-    echo -e "  ${BOLD}Chat:${RESET}    ${GREEN}✓${RESET} via roc-agent"
-    echo -e "  ${BOLD}Code:${RESET}    ${GREEN}✓${RESET} via roc-agent"
-    echo -e "  ${BOLD}Error:${RESET}   ${GREEN}✓${RESET} via roc-agent"
-  else
-    echo -e "  ${BOLD}Agent:${RESET}   ${YELLOW}⚠${RESET} roc-agent not found"
-  fi
-
-  # Propagated containers
-  echo -e "\n  ${BOLD}Propagated to:${RESET}"
-  local found=0
-  for app in "$ROC_DIR"/apps/*/; do
-    local app_name=$(basename "$app")
-    local data_dir="$ROC_DIR/data-*"
-    # Check if any data dir has .lsmod
-    for d in "$ROC_DIR"/data-*/; do
-      if [ -d "$d/root/.lsmod" ]; then
-        local container_name=$(basename "$d" | sed 's/data-//')
-        echo -e "  ${GREEN}●${RESET} $container_name"
-        found=$((found + 1))
-      fi
-    done
-    # Also check app-specific data dirs
-    if [ -d "$app/data-root/root/.lsmod" ]; then
-      echo -e "  ${GREEN}●${RESET} $app_name"
-      found=$((found + 1))
-    fi
-  done
-  if [ "$found" -eq 0 ]; then
-    echo -e "  ${DIM}No containers yet. Run: roc-ai install${RESET}"
-  fi
-
-  # API Keys
-  lsmod_load_keys
-  local keys_ok=0
-  for k in GROQ_KEY OPENAI_KEY OR_KEY GEMINI_API_KEY TOKEN; do
-    if [ -n "${!k:-}" ]; then
-      keys_ok=$((keys_ok + 1))
-    fi
-  done
-  echo -e "\n  ${BOLD}API Keys:${RESET} ${keys_ok} configured ${DIM}($keys_ok/5)${RESET}"
-}
-
-# ──────────────────────────────────────────────────────────────
-#  lsmod Route — route task ke agent yang tepat
-#  Ini fitur istimewa untuk roc-ai sebagai pewaris lsmod
+#  lsmod Route — routing task ke modul yg tepat (pattern match)
 # ──────────────────────────────────────────────────────────────
 lsmod_route() {
   local task="$1"
-  local context="${2:-auto}"
-
   if [ -z "$task" ]; then
-    echo -e "${YELLOW}[lsmod] Usage: lsmod_route <task> [context]${RESET}"
+    echo -e "${YELLOW}[lsmod] Usage: lsmod_route <task>${RESET}"
     return 1
   fi
-
-  # Route berdasarkan konteks
-  case "$context" in
-    crew|crewai)
-      echo -e "${CYAN}[lsmod] → Routing to CrewAI${RESET}"
-      if [ -x "$ROC_DIR/apps/crewai/crewai.sh" ]; then
-        bash "$ROC_DIR/apps/crewai/crewai.sh" run "$task"
-      else
-        lsmod_agent "$task"
-      fi
-      ;;
-    hms|hermes)
-      echo -e "${CYAN}[lsmod] → Routing to Hermes Agent${RESET}"
-      if [ -x "$ROC_DIR/apps/hms/hms.sh" ]; then
-        bash "$ROC_DIR/apps/hms/hms.sh" run "$task"
-      else
-        lsmod_agent "$task"
-      fi
-      ;;
-    adk|invoice)
-      echo -e "${CYAN}[lsmod] → Routing to ADK Invoice${RESET}"
-      if [ -x "$ROC_DIR/apps/adk-invoice/adk-invoice.sh" ]; then
-        bash "$ROC_DIR/apps/adk-invoice/adk-invoice.sh" cli "$task"
-      else
-        lsmod_agent "$task"
-      fi
-      ;;
-    code|coding)
-      lsmod_code "$task"
-      ;;
-    error|fix)
-      lsmod_error "$task"
-      ;;
-    auto|*)
-      # Auto-route: gunakan roc-agent (prioritas AI-best)
-      lsmod_agent "$task"
-      ;;
+  local target="chat"
+  case "$task" in
+    *error*|*Error*|*bug*|*BUG*|*gagal*|*Traceback*|*traceback*) target="error" ;;
+    *code*|*function*|*script*|*refactor*|*debug*|*koding*|*coding*) target="code" ;;
+    *deploy*|*build*|*create*|*buat*|*implement*|*install*|*setup*|*tulis*) target="agent" ;;
+  esac
+  echo -e "  ${CYAN}[lsmod:route]${RESET} task → modul ${BOLD}${target}${RESET}"
+  case "$target" in
+    error) lsmod_error "$task" ;;
+    code)  lsmod_code "$task" ;;
+    agent) lsmod_agent "$task" ;;
+    *)     lsmod_chat "$task" ;;
   esac
 }
 
 # ──────────────────────────────────────────────────────────────
-#  lsmod Broadcast — kirim pesan ke semua AI agents
+#  lsmod Broadcast — pesan ke semua modul native
 # ──────────────────────────────────────────────────────────────
 lsmod_broadcast() {
-  local message="$1"
-
-  if [ -z "$message" ]; then
+  local msg="${*:-}"
+  if [ -z "$msg" ]; then
     echo -e "${YELLOW}[lsmod] Usage: lsmod_broadcast <message>${RESET}"
     return 1
   fi
+  echo -e "${MAGENTA}${BOLD}📢 lsmod Broadcast${RESET}"
+  echo -e "  ${DIM}Message: $msg${RESET}\n"
+  local entry name handler sent=0
+  mkdir -p "$HOME/.hermes"
+  echo "$(date -Iseconds) $msg" >> "$HOME/.hermes/lsmod_broadcast.log"
+  for entry in "${LSMOD_REGISTRY[@]}"; do
+    name="${entry%%|*}"; handler="${entry##*|}"
+    if declare -F "$handler" >/dev/null 2>&1; then
+      echo -e "  ${GREEN}●${RESET} $name ${DIM}($handler)${RESET} — registered ✓"
+      sent=$((sent + 1))
+    fi
+  done
+  echo -e "\n  ${DIM}Logged → ~/.hermes/lsmod_broadcast.log · $sent/${#LSMOD_REGISTRY[@]} modules${RESET}"
+}
 
-  echo -e "${MAGENTA}${BOLD}[lsmod] Broadcasting to all AI agents:${RESET} $message\n"
+# ──────────────────────────────────────────────────────────────
+#  lsmod Mesh — status layanan NATIVE (bukan container lagi)
+# ──────────────────────────────────────────────────────────────
+lsmod_mesh() {
+  echo -e "${CYAN}${BOLD}"
+  echo " ╔══════════════════════════════════════════════════════╗"
+  echo " ║  🕸️ lsmod — Native Service Mesh (v2)                ║"
+  echo " ║  Status layanan native (tanpa containers)           ║"
+  echo " ╚══════════════════════════════════════════════════════╝"
+  echo -e "${RESET}"
 
-  # Agent (roc-agent)
-  if command -v roc-agent &>/dev/null; then
-    echo -e "  ${GREEN}●${RESET} roc-agent ${DIM}→ available${RESET}"
+  local total=0 online=0
+  _chk() {  # _chk <label> <ok?> <detail>
+    total=$((total + 1))
+    if [ "$2" = "1" ]; then
+      echo -e "  ${GREEN}● ONLINE${RESET}  $1  ${DIM}$3${RESET}"; online=$((online + 1))
+    else
+      echo -e "  ${DIM}○ STANDBY${RESET} $1  ${DIM}$3${RESET}"
+    fi
+  }
+
+  command -v roc-agent &>/dev/null && _chk "roc-agent      " 1 "Termux native CLI" \
+    || { [ -f "$ROC_DIR/apps/roc-agent/hermes" ] && _chk "roc-agent      " 1 "bundled hermes" || _chk "roc-agent      " 0 "not found"; }
+  [ -d "$ROC_DIR/apps/ai/roadfx-ai-stack/.git" ] && _chk "roadfx-ai      " 1 "repo cloned" || _chk "roadfx-ai      " 0 "not cloned"
+  [ -d "$LSMOD_DIR/.git" ] && _chk "lsmod repo     " 1 "module cloned" || _chk "lsmod repo     " 0 "optional — built-in OK"
+  [ -d "$ROC_DIR/apps/maagba/maagba-repo/.git" ] && _chk "roc-maagba     " 1 "repo cloned" || _chk "roc-maagba     " 0 "not cloned"
+  [ -d "$ROC_DIR/apps/clawdex/clawdex-mobile/.git" ] && _chk "roc-clawdex    " 1 "repo cloned" || _chk "roc-clawdex    " 0 "not cloned"
+  [ -f "$HOME/.config/hermes/solace.env" ] && _chk "solace env     " 1 "credentials file" || _chk "solace env     " 0 "not configured"
+  [ -f "$HOME/.hermes_keys" ] || [ -f "$HOME/.hermes/.keys" ] && _chk "api keys       " 1 "hermes keys loaded" || _chk "api keys       " 0 "run: roc-agent setup"
+  if curl -sS -m 4 -o /dev/null "https://ai.roadfx.biz.id" 2>/dev/null; then _chk "gateway        " 1 "ai.roadfx.biz.id reachable"; else _chk "gateway        " 0 "unreachable"; fi
+
+  echo -e "\n  ${BOLD}Mesh Status:${RESET} ${online}/${total} layanan native tersedia"
+  echo -e "  ${BOLD}lsmod v${LSMOD_LOADER_VERSION}${RESET} ${GREEN}native-only${RESET} ${DIM}(no containers — v1.5.0)${RESET}"
+}
+
+# ──────────────────────────────────────────────────────────────
+#  lsmod Status — modul + registry + keys
+# ──────────────────────────────────────────────────────────────
+lsmod_status() {
+  echo -e "${MAGENTA}${BOLD}lsmod Module System v${LSMOD_LOADER_VERSION} (native)${RESET}\n"
+
+  if [ -d "$LSMOD_DIR/.git" ]; then
+    local ver=$(git -C "$LSMOD_DIR" describe --tags --always 2>/dev/null || git -C "$LSMOD_DIR" rev-parse --short HEAD 2>/dev/null)
+    echo -e "  ${BOLD}Module repo:${RESET} ${GREEN}✓${RESET} lsmod ${DIM}($ver)${RESET}"
   else
-    echo -e "  ${RED}○${RESET} roc-agent ${DIM}→ not found${RESET}"
+    echo -e "  ${BOLD}Module repo:${RESET} ${YELLOW}−${RESET} tidak ter-clone ${DIM}(opsional — built-in aktif)${RESET}"
   fi
 
-  # CrewAI
-  if [ -f "$ROC_DIR/apps/crewai/crewai.sh" ]; then
-    echo -e "  ${GREEN}●${RESET} roc-crewai ${DIM}→ available${RESET}"
-  else
-    echo -e "  ${DIM}○${RESET} roc-crewai ${DIM}→ not installed${RESET}"
-  fi
+  [ -f "$ROC_DIR/lib/lsmod_loader.sh" ] \
+    && echo -e "  ${BOLD}Loader:${RESET}      ${GREEN}✓${RESET} lsmod_loader.sh v${LSMOD_LOADER_VERSION}"
 
-  # Hermes Agent
-  if [ -f "$ROC_DIR/apps/hms/hms.sh" ]; then
-    echo -e "  ${GREEN}●${RESET} roc-hms ${DIM}→ available${RESET}"
+  if command -v roc-agent &>/dev/null || [ -f "$ROC_DIR/apps/roc-agent/hermes" ]; then
+    echo -e "  ${BOLD}Agent:${RESET}       ${GREEN}✓${RESET} roc-agent (agent/chat/code/error via CLI)"
   else
-    echo -e "  ${DIM}○${RESET} roc-hms ${DIM}→ not installed${RESET}"
-  fi
-
-  # ADK
-  if [ -f "$ROC_DIR/apps/adk-invoice/adk-invoice.sh" ]; then
-    echo -e "  ${GREEN}●${RESET} roc-adk ${DIM}→ available${RESET}"
-  else
-    echo -e "  ${DIM}○${RESET} roc-adk ${DIM}→ not installed${RESET}"
-  fi
-
-  # Antigravity
-  if [ -f "$ROC_DIR/apps/antigravity/antigravity.sh" ]; then
-    echo -e "  ${GREEN}●${RESET} roc-antigravity ${DIM}→ available${RESET}"
-  else
-    echo -e "  ${DIM}○${RESET} roc-antigravity ${DIM}→ not installed${RESET}"
-  fi
-
-  # MAAGBA
-  if [ -f "$ROC_DIR/apps/maagba/maagba.sh" ]; then
-    echo -e "  ${GREEN}●${RESET} roc-maagba ${DIM}→ available${RESET}"
-  else
-    echo -e "  ${DIM}○${RESET} roc-maagba ${DIM}→ not installed${RESET}"
+    echo -e "  ${BOLD}Agent:${RESET}       ${YELLOW}⚠${RESET} roc-agent not found"
   fi
 
   echo ""
-}
+  lsmod_registry
 
-# ──────────────────────────────────────────────────────────────
-#  Auto-init: ensure lsmod loaded silently
-# ──────────────────────────────────────────────────────────────
-lsmod_ensure 2>/dev/null || true
-
-# ──────────────────────────────────────────────────────────────
-#  Solace PubSub+ Helper Functions
-# ──────────────────────────────────────────────────────────────
-solace_status() {
-  curl -s "${GATEWAY:-https://ai.roadfx.biz.id}/solace/status" 2>/dev/null
-}
-
-solace_queues() {
-  curl -s "${GATEWAY:-https://ai.roadfx.biz.id}/solace/queues" 2>/dev/null
-}
-
-solace_publish() {
-  local topic="${1:?Usage: solace_publish <topic> <message>}"
-  local msg="${2:?Usage: solace_publish <topic> <message>}"
-  if [ -n "$SOLACE_URL" ] && [ -n "$SOLACE_USER" ] && [ -n "$SOLACE_PASS" ]; then
-    curl -s -u "$SOLACE_USER:$SOLACE_PASS" \
-      -X POST \
-      -H "Content-Type: text/plain" \
-      -H "Solace-Delivery-Mode: Direct" \
-      -d "$msg" \
-      "$SOLACE_URL/Topic/$topic" 2>/dev/null
-  else
-    echo '{"error":"Solace not configured"}'
-  fi
-}
-
-solace_publish_json() {
-  local topic="${1:?Usage: solace_publish_json <topic> <json>}"
-  local json="${2:?Usage: solace_publish_json <topic> <json>}"
-  if [ -n "$SOLACE_URL" ] && [ -n "$SOLACE_USER" ] && [ -n "$SOLACE_PASS" ]; then
-    curl -s -u "$SOLACE_USER:$SOLACE_PASS" \
-      -X POST \
-      -H "Content-Type: application/json" \
-      -H "Solace-Delivery-Mode: Persistent" \
-      -d "$json" \
-      "$SOLACE_URL/Topic/$topic" 2>/dev/null
-  else
-    echo '{"error":"Solace not configured"}'
-  fi
-}
-
-solace_is_connected() {
-  [ -n "$SOLACE_URL" ] && [ -n "$SOLACE_USER" ] && [ -n "$SOLACE_PASS" ]
-}
-
-# ──────────────────────────────────────────────────────────────
-#  Aiven Helper Functions
-# ──────────────────────────────────────────────────────────────
-aiven_status() {
-  [ -n "$AIVEN_TOKEN" ] && [ -n "$AIVEN_PROJECT" ] || { echo '{"error":"Aiven not configured"}'; return 1; }
-  curl -s -H "Authorization: Bearer $AIVEN_TOKEN" \
-    "https://api.aiven.io/v1/project/$AIVEN_PROJECT/service/${AIVEN_PG_SERVICE:-pg-roadfx}" 2>/dev/null
-}
-
-aiven_pg_uri() {
-  if [ -z "$AIVEN_PG_PASS" ]; then
-    echo "postgresql://avnadmin:***@${AIVEN_PG_HOST:-pg-roadfx-roadfrx-ai.e.aivencloud.com}:${AIVEN_PG_PORT:-21876}/${AIVEN_PG_DB:-defaultdb}?sslmode=require"
-  else
-    echo "postgresql://avnadmin:${AIVEN_PG_PASS}@${AIVEN_PG_HOST:-pg-roadfx-roadfrx-ai.e.aivencloud.com}:${AIVEN_PG_PORT:-21876}/${AIVEN_PG_DB:-defaultdb}?sslmode=require"
-  fi
-}
-
-aiven_is_configured() {
-  [ -n "$AIVEN_TOKEN" ] && [ -n "$AIVEN_PROJECT" ]
+  lsmod_load_keys
+  local keys_ok=0
+  for k in GROQ_KEY OPENAI_KEY OR_KEY GEMINI_API_KEY TOKEN; do
+    [ -n "${!k:-}" ] && keys_ok=$((keys_ok + 1))
+  done
+  echo -e "  ${BOLD}API Keys:${RESET} ${keys_ok} configured ${DIM}($keys_ok/5)${RESET}"
 }

@@ -10,7 +10,7 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 CYAN='\033[0;36m'; BLUE='\033[0;34m'; MAGENTA='\033[0;35m'
 BOLD='\033[1m'; DIM='\033[2m'; RESET='\033[0m'
 
-VERSION="1.4.0"
+VERSION="1.5.0"
 BIN_DIR="${PREFIX:-$HOME/.local}/bin"
 ROC_DIR="$HOME/.roc-containers"
 
@@ -35,7 +35,7 @@ echo -e "${CYAN}${BOLD}"
 echo " ╔══════════════════════════════════════════════════════╗"
 echo " ║  ⚡ roc-containers · Setup v${VERSION}                ║"
 echo " ║  Mode: ${ENV_MODE}                                       ║"
-echo " ║  Container Manager + AI Agent CLI                   ║"
+echo " ║  AI Agent CLI + App Manager (native)                ║"
 echo " ╚══════════════════════════════════════════════════════╝"
 echo -e "${RESET}"
 
@@ -177,33 +177,21 @@ AGENT_WRAPPER
 chmod +x "$BIN_DIR/roc-agent"
 printf "  ${GREEN}✅${RESET} %-20s %s\n" "roc-agent" "AI Agent CLI (Termux native)"
 
-# ── OS Containers ──
-make_cmd "roc-ubuntu"      "os/ubuntu/ubuntu.sh"        "Ubuntu 22.04 (port 2223)"
-make_cmd "roc-debian"      "os/debian/debian.sh"        "Debian 12 (port 2224)"
-make_cmd "roc-hermui"      "apps/hermui/hermui.sh"      "Hermes UI (ivansslo/hermes-ui)"
-
 # ── ⭐ AI Stack (Primary) ──
 make_cmd "roc-ai"          "apps/ai/ai.sh"              "⭐ RoadFX AI Stack (ivansslo/roadfx-ai-stack)"
 
-# ── AI & Dev Apps ──
-make_cmd "roc-crewai"      "apps/crewai/crewai.sh"                "CrewAI multi-agent"
-make_cmd "roc-hms"       "apps/hms/hms.sh"              "Hermes Agent (container, root)"
-make_cmd "roc-antigravity" "apps/antigravity/antigravity.sh"      "Antigravity AI IDE (port 5905)"
-make_cmd "roc-adk"         "apps/adk-invoice/adk-invoice.sh"      "ADK Invoice (port 8000)"
-
-# ── Network & Services ──
-make_cmd "roc-tailscale"   "apps/tailscale/tailscale.sh"  "Tailscale VPN node"
-make_cmd "roc-httpd"       "apps/httpd/httpd.sh"          "HTTP Server (port 3000)"
-make_cmd "roc-spwr"  "apps/spwr/spwr.sh"  "Superpowers (coding agent skills)"
-make_cmd "roc-clawdex"    "apps/clawdex/clawdex.sh"    "Clawdex Mobile (ivansslo/clawdex-mobile)"
-make_cmd "roc-maagba"     "apps/maagba/maagba.sh"     "Multi-Agent Architectural Guidance (Bedrock AgentCore)"
+# ── Native Apps (v1.5.0+: semua command container DIHAPUS) ──
+make_cmd "roc-hermui"      "apps/hermui/hermui.sh"      "Hermes UI (dashboard bundel)"
+make_cmd "roc-spwr"        "apps/spwr/spwr.sh"          "Superpowers (coding agent skills)"
+make_cmd "roc-clawdex"     "apps/clawdex/clawdex.sh"    "Clawdex Mobile (ivansslo/clawdex-mobile)"
+make_cmd "roc-maagba"      "apps/maagba/maagba.sh"      "Multi-Agent Architectural Guidance (Bedrock AgentCore)"
 
 # ── Google Cloud ──
 make_cmd "roc-gcp"         "lib/google_project.sh"        "Google Project (GCP)"
 
 # ── System ──
 make_cmd "roc-menu"        "menu.sh"                      "roc-containers menu"
-make_cmd "roc-status"      "lib/manager.sh"               "Container manager"
+make_cmd "roc-status"      "lib/manager.sh"               "Container status (udocker minimal)"
 make_cmd "roc-sysinfo"     "lib/sysinfo.sh"               "System info"
 make_cmd "roc-update"      "lib/update.sh"                "Update roc-containers"
 make_cmd "roc-uninstall"   "lib/uninstall.sh"             "Uninstall / clean"

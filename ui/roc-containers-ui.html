@@ -2,30 +2,63 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>roc-containers • Modern Terminal UI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>roc-containers v1.5.0 • Native</title>
 <style>
   body { background:#0a0c10; color:#c9d1d9; font-family:ui-monospace,monospace; padding:20px; }
   .terminal { max-width:920px; margin:auto; background:#161b22; border:1px solid #30363d; border-radius:16px; overflow:hidden; }
-  .header { background:#21262d; padding:10px 16px; display:flex; align-items:center; }
+  .header { background:#21262d; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .header small { color:#8b949e; }
   .content { padding:22px; }
+  h3 { color:#58a6ff; font-size:12px; text-transform:uppercase; letter-spacing:1px; margin:18px 0 8px; }
   .menu { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:6px; }
   .item { padding:9px 12px; border-radius:8px; background:#0d1117; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
   .item:hover { background:#1f2937; }
+  .item .num { color:#d2a8ff; font-weight:bold; margin-right:10px; }
+  .item.sys .num { color:#8b949e; }
+  .item.app .num { color:#56b6c2; }
   .new { color:#3fb950; font-size:10px; }
+  .note { background:#0d1117; border-left:3px solid #f85149; padding:10px 14px; border-radius:6px; font-size:12px; color:#ffa198; margin-bottom:14px; }
+  code { color:#79c0ff; }
 </style>
 </head>
 <body>
 <div class="terminal">
-  <div class="header">roc-containers v1.4.0 • Infrastructure Xloud</div>
+  <div class="header"><b>roc-containers v1.5.0 • AI Agent CLI (native)</b><small>@ivansslo</small></div>
   <div class="content">
-    <div style="margin-bottom:16px;color:#56b6c2">⭐ AI Stack + Autonomous Orchestrator</div>
+    <div class="note">v1.5.0: semua command berbasis container <b>dihapus</b> (roc-ubuntu/debian/httpd/tailscale/hms/crewai/adk/antigravity). Menjalankan container kini manual: <code>udocker run &lt;nama-container&gt;</code></div>
+
+    <h3>⭐ AI Stack (Primary)</h3>
     <div class="menu">
-      <div class="item"><span>roc-ai orchestrator</span><span class="new">NEW</span></div>
-      <div class="item"><span>roc-agent orchestrator</span></div>
-      <div class="item"><span>roc-ai mesh</span></div>
-      <div class="item"><span>roc-agent import → AIS-DEV</span><span class="new">NEW</span></div>
+      <div class="item"><span><span class="num">[01]</span> RoadFX AI Stack</span><span class="new">roc-ai</span></div>
+      <div class="item"><span><span class="num">[02]</span> AI Agent Mesh</span><span class="new">roc-ai mesh</span></div>
+      <div class="item"><span><span class="num">[03]</span> 🚀 Orchestrator</span><span class="new">NEW</span></div>
     </div>
-    <div style="margin-top:30px;font-size:12px;color:#64748b">All commands use same TOKEN auth • Gateway + AIS-DEV first-class</div>
+
+    <h3>🤖 AI & Agent</h3>
+    <div class="menu">
+      <div class="item"><span><span class="num">[04]</span> AI Agent CLI</span><span class="new">roc-agent</span></div>
+      <div class="item"><span><span class="num">[05]</span> MAAGBA (Bedrock)</span></div>
+    </div>
+
+    <h3>📦 Apps (native)</h3>
+    <div class="menu">
+      <div class="item app"><span><span class="num">[06]</span> Superpowers</span></div>
+      <div class="item app"><span><span class="num">[07]</span> Hermes UI (dashboard)</span></div>
+      <div class="item app"><span><span class="num">[08]</span> Clawdex Mobile</span></div>
+    </div>
+
+    <h3>⚙️ System</h3>
+    <div class="menu">
+      <div class="item sys"><span><span class="num">[09]</span> Container Status (udocker)</span></div>
+      <div class="item sys"><span><span class="num">[10]</span> Google Cloud (GCP)</span></div>
+      <div class="item sys"><span><span class="num">[11]</span> System Info</span></div>
+      <div class="item sys"><span><span class="num">[12]</span> Update</span></div>
+      <div class="item sys"><span><span class="num">[13]</span> Uninstall / Clean</span></div>
+      <div class="item sys"><span><span class="num">[14]</span> Repair udocker</span></div>
+      <div class="item sys"><span><span class="num">[15]</span> Remote Dev Connect</span></div>
+      <div class="item sys"><span><span class="num">[00]</span> Exit</span></div>
+    </div>
   </div>
 </div>
 </body>
