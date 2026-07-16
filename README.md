@@ -2,7 +2,7 @@
 
 **AI Agent CLI + App Manager for Termux (native)** — hermes CLI, lsmod v2 module system, RoadFX AI stack, dan tool native lainnya. Dibuat oleh **ivansslo** (2026) · **License: MIT**.
 
-> **v1.5.3 — Native Only + Oracle VM + Antigravity IDE (label: `antigravity.ai.studio`).** Semua command berbasis container **telah dihapus**
+> **v1.5.4 — Native Only + Oracle VM (panel pintasan layanan) + Antigravity IDE (label: `antigravity.ai.studio`).** Semua command berbasis container **telah dihapus**
 > (`roc-ubuntu`, `roc-debian`, `roc-httpd`, `roc-tailscale`, `roc-hms`,
 > `roc-crewai`, `roc-adk`, `roc-antigravity`). udocker tetap tersedia untuk
 > menjalankan container **manual berdasarkan nama**: `udocker run <nama>`.
@@ -181,6 +181,10 @@ MIT License · Created by **ivansslo** · 2026
 ---
 
 ## 🆕 Changelog
+
+### v1.5.4 — Panel pintasan layanan `webvirtcloud.ai.studio` (2026-07-17)
+- UI panel (`ui/roc-containers-ui.html`): seksi 🖥️ Oracle VM kini berisi **link satu-tap** langsung ke seluruh layanan — WebVirtCloud `/wvc/`, Uptime Kuma `/kuma/`, Monitor `/monitor/`, noVNC `/vm/novnc/`, plus Console Web `vm.roadfx.biz.id`.
+- Melengkapi integrasi yang sudah ada: wrapper `roc-vm` (delegate `hermes vm …`), menu 16–18, probe live di `roc-vm status`.
 
 ### v1.5.3 — Label panel `antigravity.ai.studio` (2026-07-17)
 - Konstanta/label resmi **`antigravity.ai.studio`** untuk Antigravity IDE — mengikuti pola `webvirtcloud.ai.studio`.

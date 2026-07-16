@@ -31,7 +31,7 @@ print_header(){
   echo -e "${CYAN}${BOLD}"
   echo "  ╔══════════════════════════════════════════════════════╗"
   echo "  ║       roc-containers · AI Agent CLI (native)         ║"
-  echo "  ║               v1.5.3 (c) 2026 | @ivansslo            ║"
+  echo "  ║               v1.5.4 (c) 2026 | @ivansslo            ║"
   echo "  ╚══════════════════════════════════════════════════════╝"
   echo -e "${RESET}"
   echo -e "  ${DIM}OS: $(uname -m)${RESET}"
