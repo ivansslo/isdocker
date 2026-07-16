@@ -4,7 +4,8 @@
 #  License: MIT
 #  Repo: https://github.com/ivansslo/roc-containers
 # ─────────────────────────────────────────────────────────────────
-#  v1.5.1 — NATIVE ONLY + Oracle VM. Semua command berbasis container
+#  v1.5.3 — NATIVE ONLY + Oracle VM + label panel antigravity.ai.studio.
+#  Sebelumnya: semua command berbasis container
 #  (udocker) telah dihapus; wrapper usang otomatis dibersihkan setup.sh.
 #  Menjalankan container kini manual via udocker:
 #      udocker run <nama-container>
@@ -30,7 +31,7 @@ print_header(){
   echo -e "${CYAN}${BOLD}"
   echo "  ╔══════════════════════════════════════════════════════╗"
   echo "  ║       roc-containers · AI Agent CLI (native)         ║"
-  echo "  ║               v1.5.1 (c) 2026 | @ivansslo            ║"
+  echo "  ║               v1.5.3 (c) 2026 | @ivansslo            ║"
   echo "  ╚══════════════════════════════════════════════════════╝"
   echo -e "${RESET}"
   echo -e "  ${DIM}OS: $(uname -m)${RESET}"
@@ -106,10 +107,16 @@ while true; do
   print_item 16  "VM Status & Health"            "roc-vm status" "app"
   print_item 17  "Buka VM Console"               "vm.roadfx.biz.id/vm" "app"
   print_item 18  "Layanan di VM"                 "roc-vm services" "app"
+
+  # ── 🧠 Antigravity IDE (antigravity.ai.studio) ──
+  print_section "🧠  Antigravity IDE  (alias: antigravity.ai.studio)"
+  print_item 19  "Antigravity Status"            "hermes antigravity status" "app"
+  print_item 20  "Web UI (node HP)"              "localhost:5905" "app"
+  print_item 21  "Node Oracle VM (noVNC :6905)"  "pending install di VM" "app"
   print_item 00  "Exit"                          ""  "sys"
 
   echo ""
-  echo -en "  ${BOLD}Select option [00-18]: ${RESET}"
+  echo -en "  ${BOLD}Select option [00-21]: ${RESET}"
   read -r choice
 
   case "$choice" in
@@ -151,6 +158,27 @@ while true; do
       elif [ -n "${PREFIX:-}" ] && [ -f "$PREFIX/bin/roc-vm" ]; then bash "$PREFIX/bin/roc-vm" "$_vm_arg"
       elif [ -f "$SCRIPT_DIR/apps/roc-agent/hermes" ]; then bash "$SCRIPT_DIR/apps/roc-agent/hermes" vm "$_vm_arg"
       else echo -e "  ${RED}roc-vm belum terinstall — jalankan: bash setup.sh${RESET}"; sleep 2; fi
+      ;;
+
+    # ── 🧠 Antigravity IDE (antigravity.ai.studio) ──
+    19)
+      if command -v hermes &>/dev/null; then hermes antigravity status
+      elif [ -f "$SCRIPT_DIR/apps/roc-agent/hermes" ]; then bash "$SCRIPT_DIR/apps/roc-agent/hermes" antigravity status
+      else echo -e "  ${RED}hermes belum terinstall — jalankan: bash setup.sh${RESET}"; sleep 2; fi
+      ;;
+    20)
+      _ag_url="http://localhost:5905"
+      echo -e "  ${CYAN:-}🧠 Antigravity Web (node HP): $_ag_url${RESET:-}"
+      if command -v termux-open-url &>/dev/null; then termux-open-url "$_ag_url"
+      elif command -v am &>/dev/null; then am start -a android.intent.action.VIEW -d "$_ag_url" 2>/dev/null || true
+      else echo "  Buka manual di browser: $_ag_url"; fi
+      sleep 2
+      ;;
+    21)
+      echo -e "  ${CYAN:-}🧠 Antigravity node Oracle VM (alias: antigravity.ai.studio)${RESET:-}"
+      echo "     noVNC : http://161.118.253.28:6905/vnc.html"
+      echo -e "     ${YELLOW:-}Status: pending — install di VM belum dijalankan (menunggu akses SSH/OCI Run Command).${RESET:-}"
+      sleep 3
       ;;
 
     0|00|q|Q|exit) echo -e "\n  Goodbye.\n" ; exit 0 ;;

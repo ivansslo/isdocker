@@ -2,7 +2,7 @@
 
 **AI Agent CLI + App Manager for Termux (native)** — hermes CLI, lsmod v2 module system, RoadFX AI stack, dan tool native lainnya. Dibuat oleh **ivansslo** (2026) · **License: MIT**.
 
-> **v1.5.2 — Native Only + Oracle VM + Antigravity IDE.** Semua command berbasis container **telah dihapus**
+> **v1.5.3 — Native Only + Oracle VM + Antigravity IDE (label: `antigravity.ai.studio`).** Semua command berbasis container **telah dihapus**
 > (`roc-ubuntu`, `roc-debian`, `roc-httpd`, `roc-tailscale`, `roc-hms`,
 > `roc-crewai`, `roc-adk`, `roc-antigravity`). udocker tetap tersedia untuk
 > menjalankan container **manual berdasarkan nama**: `udocker run <nama>`.
@@ -181,6 +181,12 @@ MIT License · Created by **ivansslo** · 2026
 ---
 
 ## 🆕 Changelog
+
+### v1.5.3 — Label panel `antigravity.ai.studio` (2026-07-17)
+- Konstanta/label resmi **`antigravity.ai.studio`** untuk Antigravity IDE — mengikuti pola `webvirtcloud.ai.studio`.
+- Menu opsi baru: **19** Antigravity Status (via `hermes antigravity status`), **20** Web UI node HP (`http://localhost:5905`, auto-buka browser), **21** Node Oracle VM noVNC `:6905` (status pending sampai instalasi VM selesai).
+- UI panel (`ui/roc-containers-ui.html`): seksi 🧠 Antigravity IDE dengan dua node (HP + Oracle VM).
+- Hermes v5.13.1 (roc-agentsroute): panel `vm status` kini menampilkan probe **Node HP (:5905)** dan **Node VM (:6905)** + label di `antigravity status`.
 
 ### v1.5.2 — Bundle hermes v5.13.0 "Antigravity" (2026-07-16)
 - Bundle `apps/roc-agent/hermes` sinkron → **v5.13.0**: command baru
