@@ -10,7 +10,7 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 CYAN='\033[0;36m'; BLUE='\033[0;34m'; MAGENTA='\033[0;35m'
 BOLD='\033[1m'; DIM='\033[2m'; RESET='\033[0m'
 
-VERSION="1.5.6"
+VERSION="1.6.0"
 BIN_DIR="${PREFIX:-$HOME/.local}/bin"
 ROC_DIR="$HOME/.roc-containers"
 
@@ -240,6 +240,21 @@ ACC_WRAPPER
 chmod +x "$BIN_DIR/roc-access"
 printf "  ${GREEN}✅${RESET} %-20s %s\n" "roc-access" "🔑 SSH/VNC/RDP Oracle VM (webvirtcloud.ai.studio)"
 
+# ── ROC-HELP: bantuan keseluruhan ekosistem ──
+cat > "$BIN_DIR/roc-help" << HELP_WRAPPER
+$AGENT_SHEBANG
+# roc-help — 📚 bantuan keseluruhan ROC ecosystem (filter: vm|tunnel|ag|ai|sys|docs|label)
+ROC_DIR="\$HOME/.roc-containers"
+LIB_HELP="\$ROC_DIR/lib/rochelp.sh"
+if [ ! -f "\$LIB_HELP" ]; then
+    echo "❌ lib/rochelp.sh tidak ditemukan — jalankan: bash \$ROC_DIR/setup.sh (git pull dulu)"
+    exit 1
+fi
+exec bash "\$LIB_HELP" "\$@"
+HELP_WRAPPER
+chmod +x "$BIN_DIR/roc-help"
+printf "  ${GREEN}✅${RESET} %-20s %s\n" "roc-help" "📚 Bantuan keseluruhan (vm/tunnel/ag/ai/sys/docs)"
+
 # ── ⭐ AI Stack (Primary) ──
 make_cmd "roc-ai"          "apps/ai/ai.sh"              "⭐ RoadFX AI Stack (ivansslo/roadfx-ai-stack)"
 
@@ -292,6 +307,7 @@ echo -e "  ${CYAN}roc-ai orchestrator <t>${RESET} 🧠 Autonomous Orchestrator (
 echo -e "  ${CYAN}roc-vm status${RESET}           🖥️ Oracle VM status (alias: webvirtcloud.ai.studio)"
 echo -e "  ${CYAN}roc-tunnel up-bg${RESET}        🌐 Cloudflare Tunnel → ag.roadfx.biz.id (antigravity.ai.studio)"
 echo -e "  ${CYAN}roc-access setup${RESET}        🔑 Wizard akses VM: SSH/VNC/RDP (webvirtcloud.ai.studio)"
+echo -e "  ${CYAN}roc-help${RESET}                📚 Bantuan keseluruhan ekosistem"
 echo -e "  ${CYAN}roc-remote${RESET}              🌐 Connect ke remote dev"
 echo -e "  ${CYAN}roc-menu${RESET}                Menu utama"
 echo -e "  ${CYAN}roc-status${RESET}              Cek container status"

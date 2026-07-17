@@ -31,7 +31,7 @@ print_header(){
   echo -e "${CYAN}${BOLD}"
   echo "  ╔══════════════════════════════════════════════════════╗"
   echo "  ║       roc-containers · AI Agent CLI (native)         ║"
-  echo "  ║               v1.5.6 (c) 2026 | @ivansslo            ║"
+  echo "  ║               v1.6.0 (c) 2026 | @ivansslo            ║"
   echo "  ╚══════════════════════════════════════════════════════╝"
   echo -e "${RESET}"
   echo -e "  ${DIM}OS: $(uname -m)${RESET}"
@@ -124,10 +124,14 @@ while true; do
   print_item 24  "SSH masuk VM"                  "roc-access ssh" "app"
   print_item 25  "VNC / noVNC"                   "roc-access vnc" "app"
   print_item 26  "RDP (xrdp)"                    "roc-access rdp" "app"
+
+  # ── 📚 Bantuan keseluruhan ──
+  print_section "📚  Bantuan  (help keseluruhan ekosistem)"
+  print_item 27  "roc-help"                      "help semua command + panduan OCI/Rofwin" "app"
   print_item 00  "Exit"                          ""  "sys"
 
   echo ""
-  echo -en "  ${BOLD}Select option [00-26]: ${RESET}"
+  echo -en "  ${BOLD}Select option [00-27]: ${RESET}"
   read -r choice
 
   case "$choice" in
@@ -211,6 +215,13 @@ while true; do
       elif [ -f "$SCRIPT_DIR/lib/vmaccess.sh" ]; then bash "$SCRIPT_DIR/lib/vmaccess.sh" $_acc_arg
       else echo -e "  ${RED}roc-access belum terinstall — jalankan: bash setup.sh${RESET}"; sleep 2; fi
       [ "$choice" = "23" ] && { echo -e "  ${DIM}Wizard pertama kali: roc-access setup${RESET}"; sleep 2; }
+      ;;
+
+    # ── 📚 Bantuan keseluruhan ──
+    27)
+      if command -v roc-help &>/dev/null; then roc-help
+      elif [ -f "$SCRIPT_DIR/lib/rochelp.sh" ]; then bash "$SCRIPT_DIR/lib/rochelp.sh"
+      else echo -e "  ${RED}roc-help belum terinstall — jalankan: bash setup.sh${RESET}"; sleep 2; fi
       ;;
 
     0|00|q|Q|exit) echo -e "\n  Goodbye.\n" ; exit 0 ;;

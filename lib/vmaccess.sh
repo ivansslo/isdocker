@@ -184,6 +184,12 @@ case "${1:-help}" in
   status|st) cmd_status ;;
   vnc) shift || true; cmd_vnc "${1:-url}" ;;
   rdp) shift || true; cmd_rdp "${1:-url}" ;;
+  tunnel)
+    # jembatan ke roc-tunnel sub-oracle (gabungan Oracle × Tunnel)
+    shift || true
+    _LIB_TUN="$CONF_DIR/lib/tunnel.sh"
+    if [ -f "$_LIB_TUN" ]; then exec bash "$_LIB_TUN" "oracle-${1:-status}"
+    else err "lib/tunnel.sh belum ada — roc-update"; exit 1; fi ;;
   *)
     echo -e "${B}roc-access${N} — akses Oracle VM ($LABEL)"
     echo "  setup              wizard key + user + jalur + simpan config"
@@ -191,6 +197,7 @@ case "${1:-help}" in
     echo "  status             probe SSH/80/$AG_WEB_PORT/$AG_NOVNC_PORT/$RDP_PORT"
     echo "  vnc url|open|fwd   noVNC :$AG_NOVNC_PORT (langsung / buka browser / SSH tunnel)"
     echo "  rdp url|setup|fwd  RDP :$RDP_PORT (info / install xrdp di VM / SSH tunnel)"
+    echo "  tunnel             alias → roc-tunnel oracle-* (cloudflared di VM)"
     echo ""
     note "config: $CONF · label: $LABEL"
     ;;

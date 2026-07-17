@@ -141,6 +141,106 @@ cmd_quick(){
   exec cloudflared tunnel --url "$TUN_TARGET"
 }
 
+# ═══ Gabung Oracle VM — cloudflared di VM via roc-access ssh ════════════════
+LIB_ACC="${ROC_ACCESS_LIB:-$HOME/.roc-containers/lib/vmaccess.sh}"
+VM_TUN_NAME="${ROC_VM_TUN_NAME:-roc-ag-vm}"
+VM_NOVNC_HOST="${ROC_VM_NOVNC_HOST:-novnc.roadfx.biz.id}"
+VM_SSH_HOST="${ROC_VM_SSH_HOST:-sshvm.roadfx.biz.id}"
+VM_NOVNC_PORT="${AG_NOVNC_PORT:-6905}"
+
+acc_ok(){ [ -f "$LIB_ACC" ] || { err "roc-access belum ada — jalankan: roc-access setup"; exit 1; }; }
+
+cmd_oracle_install(){
+  acc_ok
+  cat > "$ROC_CFD_DIR/oracle-install.sh" <<'EOS'
+set -e
+echo "[roc-vm] pasang cloudflared…"
+arch="$(dpkg --print-architecture 2>/dev/null || echo arm64)"
+pkg="cloudflared-linux-${arch}.deb"
+curl -fsSL -o /tmp/cfd.deb "https://github.com/cloudflare/cloudflared/releases/latest/download/$pkg"
+sudo dpkg -i /tmp/cfd.deb || sudo apt-get install -f -y
+cloudflared --version
+echo "[roc-vm] INSTALL-OK"
+EOS
+  bash "$LIB_ACC" ssh 'bash -s' < "$ROC_CFD_DIR/oracle-install.sh"
+}
+
+cmd_oracle_login(){
+  acc_ok
+  echo -e "${B}Salin cert.pem (hasil 'roc-tunnel login' di HP) ke VM…${N}"
+  [ -f "$CFD_HOME/cert.pem" ] || { err "belum ada $CFD_HOME/cert.pem — jalankan dulu: roc-tunnel login"; exit 1; }
+  bash "$LIB_ACC" ssh 'mkdir -p ~/.cloudflared && cat > ~/.cloudflared/cert.pem && chmod 600 ~/.cloudflared/cert.pem && echo CERT-OK' < "$CFD_HOME/cert.pem"
+  note "cert akun+zone sama untuk semua tunnel milikmu — tidak perlu login ulang di VM"
+}
+
+cmd_oracle_create(){
+  acc_ok
+  cat > "$ROC_CFD_DIR/oracle-create.sh" <<EOS
+set -e
+TUN_NAME="$VM_TUN_NAME"; NOVNC_HOST="$VM_NOVNC_HOST"; SSH_HOST="$VM_SSH_HOST"; NOVNC_PORT="$VM_NOVNC_PORT"
+[ -f ~/.cloudflared/cert.pem ] || { echo "cert.pem belum ada — jalankan: roc-tunnel oracle-login"; exit 1; }
+if cloudflared tunnel list 2>/dev/null | grep -q " \$TUN_NAME\$"; then
+  echo "[roc-vm] tunnel \$TUN_NAME sudah ada"
+else
+  cloudflared tunnel create "\$TUN_NAME"
+fi
+TID=\$(cloudflared tunnel list -o json | python3 -c 'import json,sys,os
+n=os.environ["TUN_NAME"] if "TUN_NAME" in os.environ else ""
+for t in json.load(sys.stdin):
+    if t.get("name")==n: print(t["id"]); break' 2>/dev/null || true)
+[ -z "\$TID" ] && TID=\$(cloudflared tunnel list | awk -v n="\$TUN_NAME" '\$2==n{print \$1; exit}')
+echo "[roc-vm] tunnel id: \$TID"
+mkdir -p ~/.cloudflared
+cat > ~/.cloudflared/config.yml <<CFG
+tunnel: \$TID
+credentials-file: ~/.cloudflared/\$TID.json
+ingress:
+  - hostname: \$NOVNC_HOST
+    service: http://localhost:\$NOVNC_PORT
+  - hostname: \$SSH_HOST
+    service: ssh://localhost:22
+  - service: http_status:404
+CFG
+cloudflared tunnel route dns "\$TUN_NAME" "\$NOVNC_HOST" || true
+cloudflared tunnel route dns "\$TUN_NAME" "\$SSH_HOST" || true
+echo "[roc-vm] CREATE-OK  https://\$NOVNC_HOST  (+ \$SSH_HOST via cloudflared access)"
+EOS
+  bash "$LIB_ACC" ssh 'bash -s' < "$ROC_CFD_DIR/oracle-create.sh"
+}
+
+cmd_oracle_up(){
+  acc_ok
+  cat > "$ROC_CFD_DIR/oracle-up.sh" <<'EOS'
+set -e
+sudo tee /etc/systemd/system/cloudflared-roc.service >/dev/null <<UNIT
+[Unit]
+Description=Cloudflare Tunnel (roc-ag-vm — novnc.roadfx.biz.id)
+After=network-online.target
+[Service]
+Type=simple
+ExecStart=/usr/bin/cloudflared --no-autoupdate --config $HOME/.cloudflared/config.yml tunnel run
+Restart=always
+RestartSec=5
+[Install]
+WantedBy=multi-user.target
+UNIT
+sudo systemctl daemon-reload
+sudo systemctl enable --now cloudflared-roc
+sleep 3
+systemctl is-active cloudflared-roc
+EOS
+  bash "$LIB_ACC" ssh 'bash -s' < "$ROC_CFD_DIR/oracle-up.sh"
+  ok "cloudflared VM aktif — cek: roc-tunnel oracle-status"
+}
+
+cmd_oracle_status(){
+  acc_ok
+  bash "$LIB_ACC" ssh 'echo "== systemd =="; systemctl is-active cloudflared-roc 2>/dev/null || echo inactive; echo "== tunnels =="; cloudflared tunnel list 2>/dev/null | head -6; echo "== log =="; journalctl -u cloudflared-roc -n 4 --no-pager 2>/dev/null | tail -4'
+  local code
+  code=$(curl -s -m 8 -o /dev/null -w '%{http_code}' "https://$VM_NOVNC_HOST/vnc.html" 2>/dev/null || echo 000)
+  case "$code" in 2*|3*|401|403) ok "probe https://$VM_NOVNC_HOST/vnc.html → $code" ;; *) warn "probe https://$VM_NOVNC_HOST/vnc.html → $code (noVNC :$VM_NOVNC_PORT harus jalan di VM)" ;; esac
+}
+
 case "${1:-help}" in
   install) cmd_install ;;
   login) cmd_login ;;
@@ -151,6 +251,11 @@ case "${1:-help}" in
   status|st) cmd_status ;;
   url) cmd_url ;;
   quick) cmd_quick ;;
+  oracle-install) mkdir -p "$ROC_CFD_DIR"; cmd_oracle_install ;;
+  oracle-login)   cmd_oracle_login ;;
+  oracle-create)  mkdir -p "$ROC_CFD_DIR"; cmd_oracle_create ;;
+  oracle-up)      mkdir -p "$ROC_CFD_DIR"; cmd_oracle_up ;;
+  oracle-status)  cmd_oracle_status ;;
   *)
     echo -e "${B}roc-tunnel${N} — Cloudflare Tunnel untuk layanan ROC"
     echo "  install   pasang cloudflared (pkg/Brew)"
@@ -159,5 +264,11 @@ case "${1:-help}" in
     echo "  up        jalankan foreground   |  up-bg   background (nohup)"
     echo "  down      hentikan background   |  status  ringkasan + probe"
     echo "  url       cetak URL publik      |  quick   uji trycloudflare acak"
+    echo ""
+    echo -e "${B}── Gabung Oracle VM (via roc-access ssh) ──${N}"
+    echo "  oracle-install   pasang cloudflared DI VM"
+    echo "  oracle-login     salin cert.pem HP → VM"
+    echo "  oracle-create    tunnel $VM_TUN_NAME: $VM_NOVNC_HOST→:$VM_NOVNC_PORT (+$VM_SSH_HOST→:22)"
+    echo "  oracle-up        systemd start di VM │ oracle-status"
     ;;
 esac

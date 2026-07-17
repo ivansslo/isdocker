@@ -26,7 +26,7 @@
 <div class="terminal">
   <div class="header"><b>roc-containers v1.5.1 • AI Agent CLI (native)</b><small>@ivansslo</small></div>
   <div class="content">
-    <div class="note">v1.5.5: <b>auto-cleanup</b> — wrapper usang (roc-ubuntu/debian/httpd/tailscale/hms/crewai/adk/antigravity) otomatis dihapus saat setup/update. Menjalankan container manual: <code>udocker run &lt;nama-container&gt;</code>. <b>Oracle VM</b> (alias <code>webvirtcloud.ai.studio</code> — pintasan layanan satu-tap), <b>Antigravity IDE</b> (alias <code>antigravity.ai.studio</code>), dan <b>Cloudflare Tunnel</b> <code>roc-tunnel</code> → <code>ag.roadfx.biz.id</code>.</div>
+    <div class="note">v1.6.0: <b>auto-cleanup</b> tetap aktif. Ekspansi besar: <b>Oracle × Tunnel digabung</b> (<code>roc-tunnel oracle-*</code> → <code>novnc.roadfx.biz.id</code> + <code>sshvm.roadfx.biz.id</code>), <b><code>roc-help</code></b> — bantuan keseluruhan ekosistem, dan panduan <b>OCI Android-VM / Rofwin</b> (<code>docs/OCI-ANDROID-VM-ROFWIN.md</code>). Label: <code>webvirtcloud.ai.studio</code> · <code>antigravity.ai.studio</code>.</div>
 
     <h3>⭐ AI Stack (Primary)</h3>
     <div class="menu">
@@ -79,6 +79,18 @@
       <div class="item app"><span><span class="num">[24]</span> SSH masuk VM</span><span class="new">roc-access ssh</span></div>
       <div class="item app"><span><span class="num">[25]</span> VNC / noVNC :6905</span><span class="new">roc-access vnc [url|open|fwd]</span></div>
       <div class="item app"><span><span class="num">[26]</span> RDP :3389 (xrdp)</span><span class="new">roc-access rdp [url|setup|fwd]</span></div>
+    </div>
+
+    <h3>🌐➕☁️ Oracle × Tunnel <span class="new">digabung — cloudflared di VM</span></h3>
+    <div class="menu">
+      <div class="item app"><span><span class="num">[→]</span> noVNC VM via Tunnel</span><span><a href="https://novnc.roadfx.biz.id" style="color:#79c0ff">novnc.roadfx.biz.id</a></span></div>
+      <div class="item app"><span><span class="num">[→]</span> SSH VM via Tunnel</span><span class="new">sshvm.roadfx.biz.id (cloudflared access)</span></div>
+      <div class="item app"><span><span class="num">[→]</span> Jembatan cepat</span><span class="new">roc-access tunnel → roc-tunnel oracle-*</span></div>
+    </div>
+
+    <h3>📚 Bantuan <span class="new">help keseluruhan</span></h3>
+    <div class="menu">
+      <div class="item app"><span><span class="num">[27]</span> roc-help</span><span class="new">help semua command + panduan OCI/Rofwin</span></div>
     </div>
 
     <h3>⚙️ System</h3>

@@ -2,7 +2,7 @@
 
 **AI Agent CLI + App Manager for Termux (native)** — hermes CLI, lsmod v2 module system, RoadFX AI stack, dan tool native lainnya. Dibuat oleh **ivansslo** (2026) · **License: MIT**.
 
-> **v1.5.6 — Native Only + Oracle VM + Antigravity IDE + Cloudflare Tunnel + `roc-access` (SSH/VNC/RDP).** Semua command berbasis container **telah dihapus**
+> **v1.6.0 — Native Only + Oracle VM + Antigravity IDE + Cloudflare Tunnel + `roc-access` + **`roc-help`**. Oracle × Tunnel digabung. Semua command berbasis container **telah dihapus**
 > (`roc-ubuntu`, `roc-debian`, `roc-httpd`, `roc-tailscale`, `roc-hms`,
 > `roc-crewai`, `roc-adk`, `roc-antigravity`). udocker tetap tersedia untuk
 > menjalankan container **manual berdasarkan nama**: `udocker run <nama>`.
@@ -181,6 +181,17 @@ MIT License · Created by **ivansslo** · 2026
 ---
 
 ## 🆕 Changelog
+
+### v1.6.0 — Oracle × Tunnel digabung + `roc-help` + panduan OCI/Rofwin (2026-07-17)
+- **Oracle × Tunnel** (`lib/tunnel.sh` sub-perintah baru, via `roc-access ssh`):
+  - `roc-tunnel oracle-install` — pasang cloudflared (.deb arm64/amd64) **di VM**.
+  - `roc-tunnel oracle-login` — salin `cert.pem` dari HP → VM (cert account+zone dipakai bersama; tanpa login interaktif server).
+  - `roc-tunnel oracle-create` — tunnel `roc-ag-vm`: ingress **`novnc.roadfx.biz.id` → `http://localhost:6905`** + **`sshvm.roadfx.biz.id` → `ssh://localhost:22`** + DNS route otomatis.
+  - `roc-tunnel oracle-up` — systemd `cloudflared-roc.service` enable+start di VM; `oracle-status` = status service + tunnel list + probe `novnc.roadfx.biz.id`.
+- **Jembatan**: `roc-access tunnel` = alias langsung ke `roc-tunnel oracle-*`.
+- **`roc-help`** (`lib/rochelp.sh`) — bantuan keseluruhan ekosistem dengan filter topik: `vm | tunnel | ag | ai | sys | docs | label`, tampilan berseksi + label resmi.
+- **Dokumen baru** `docs/OCI-ANDROID-VM-ROFWIN.md` — setting cloud.oracle.com untuk VM Android/Rofwin: tabel Security List, plugin agent, Run Command, fakta nested-KVM & blueprint runtime Winlator-style (proot+box64/FEX+wine→noVNC→Tunnel).
+- Menu opsi **27** + seksi panel UI “Oracle × Tunnel” & “Bantuan”.
 
 ### v1.5.6 — `roc-access`: SSH · VNC · RDP Oracle VM (2026-07-17)
 - Wrapper **`roc-access`** (`lib/vmaccess.sh`) — satu pintu akses `webvirtcloud.ai.studio`:
